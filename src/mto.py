@@ -91,6 +91,7 @@ def evaluate_sequential(main_args, logger, task2runner):
     logger.print_recent_stats()
 
 # 初始化了一堆map，每一个task对应一个map，每一个map对应一个runner，一个buffer，一个scheme，一个group，一个preprocess
+# buffer
 def init_tasks(task_list, main_args, logger):
     task2args, task2runner, task2buffer = {}, {}, {}
     task2scheme, task2groups, task2preprocess = {}, {}, {}
