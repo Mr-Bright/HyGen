@@ -90,7 +90,7 @@ def evaluate_sequential(main_args, logger, task2runner):
     logger.log_stat("episode", 0, 0)
     logger.print_recent_stats()
 
-
+# 初始化了一堆map，每一个task对应一个map，每一个map对应一个runner，一个buffer，一个scheme，一个group，一个preprocess
 def init_tasks(task_list, main_args, logger):
     task2args, task2runner, task2buffer = {}, {}, {}
     task2scheme, task2groups, task2preprocess = {}, {}, {}
@@ -106,6 +106,7 @@ def init_tasks(task_list, main_args, logger):
 
         # Set up schemes and groups here
         env_info = task_runner.get_env_info()
+        # 把环境的信息也加入了task_args中
         for k, v in env_info.items():
             setattr(task_args, k, v)
 
@@ -135,6 +136,8 @@ def init_tasks(task_list, main_args, logger):
     return task2args, task2runner, task2buffer, task2scheme, task2groups, task2preprocess
 
 
+# 这儿的pretrain是True，同时有test_task2offlinedata
+
 def train_sequential(train_tasks, main_args, logger, learner, task2args, task2runner, task2offlinedata, t_start=0,
                      pretrain=False, test_task2offlinedata=None):
     ########## start training ##########
@@ -157,6 +160,8 @@ def train_sequential(train_tasks, main_args, logger, learner, task2args, task2ru
     n_test_runs = max(1, main_args.test_nepisode // batch_size_run)
     test_start_time = time.time()
 
+
+    # 这个是测试的部分，每个task都测试一下
     with th.no_grad():
         for task in main_args.test_tasks:
             task2runner[task].t_env = t_env
@@ -178,12 +183,13 @@ def train_sequential(train_tasks, main_args, logger, learner, task2args, task2ru
 
     test_time_total += time.time() - test_start_time
 
+    # 开始训练
     while t_env < t_max:
         # shuffle tasks
         np.random.shuffle(train_tasks)
         # train each task
         for task in train_tasks:
-
+            # 获得这个task的episode的数据
             episode_sample = task2offlinedata[task].sample(batch_size_train)
 
             if episode_sample.device != task2args[task].device:
@@ -191,10 +197,12 @@ def train_sequential(train_tasks, main_args, logger, learner, task2args, task2ru
 
             if pretrain:
                 if hasattr(learner, 'pretrain'):
+                    # 这个应该是训练无监督技能的部分，参数episode没有啥用，用于日志记录
                     terminated = learner.pretrain(episode_sample, t_env, episode, task)
                 else:
                     raise ValueError("Do pretraining with a learner that does not have a `pretrain` method!")
             else:
+                # 这个是训练high-policy的部分
                 terminated = learner.train(episode_sample, t_env, episode, task)
 
             if terminated is not None and terminated:
@@ -202,13 +210,14 @@ def train_sequential(train_tasks, main_args, logger, learner, task2args, task2ru
 
             t_env += 1
             episode += batch_size_run
-
+        # 统一更新优化器参数
         learner.update(pretrain=pretrain)
 
         if terminated is not None and terminated:
             logger.console_logger.info(f"Terminate training by the learner at t_env = {t_env}. Finish training.")
             break
 
+        # 每隔一段时间测试一下
         # Execute test runs once in a while & final evaluation
         if (t_env - last_test_T) / main_args.test_interval >= 1 or t_env >= t_max:
             test_start_time = time.time()
@@ -265,6 +274,7 @@ def run_sequential(args, logger):
     # define main_args
     main_args = copy.deepcopy(args)
 
+    # pretrain 是 True, pretrain是是否有无监督训练得到的state encoder和action decoder
     if getattr(main_args, "pretrain", False):
         all_tasks = list(set(args.train_tasks + args.test_tasks + args.pretrain_tasks))
     else:
@@ -275,6 +285,7 @@ def run_sequential(args, logger):
     task2buffer_scheme = {task: task2buffer[task].scheme for task in all_tasks}
 
     # define mac
+    # 初始化算法控制层，用于控制agent的行为和输入输出
     mac = mac_REGISTRY[main_args.mac](train_tasks=all_tasks, task2scheme=task2buffer_scheme, task2args=task2args,
                                       main_args=main_args)
 
@@ -283,11 +294,13 @@ def run_sequential(args, logger):
                                 mac=mac)
 
     # define learner
+    # learner 负责总体的训练过程
     learner = le_REGISTRY[main_args.learner](mac, logger, main_args)
 
     if main_args.use_cuda:
         learner.cuda()
 
+    # 读入预训练好的high-policy模型，目前用不到
     if main_args.checkpoint_path != "":
         timesteps = []
         timestep_to_load = 0
@@ -319,6 +332,7 @@ def run_sequential(args, logger):
             evaluate_sequential(main_args, logger, task2runner)
             return
 
+    # 需要pretrain的话，先在pretrain的task上进行pretrain
     if getattr(main_args, "pretrain", False):
         # initialize training data for each task
         task2offlinedata = {}
@@ -341,6 +355,7 @@ def run_sequential(args, logger):
 
         logger.console_logger.info(
             "Beginning pre-training with {} timesteps for each task".format(main_args.pretrain_steps))
+        # 无监督训练skill
         train_sequential(main_args.pretrain_tasks, main_args, logger, learner, task2args, task2runner, task2offlinedata,
                          pretrain=True, test_task2offlinedata=test_task2offlinedata)
         logger.console_logger.info(f"Finished pretraining")
@@ -351,6 +366,7 @@ def run_sequential(args, logger):
         logger.console_logger.info("Saving models to {}".format(save_path))
         learner.save_models(save_path)
 
+    # 否则读入预训练好的模型
     elif hasattr(main_args, "pretrain"):
         # load models from pretrained model directory
         load_path = os.path.join(main_args.pretrain_save_dir, str(main_args.pretrain_steps))

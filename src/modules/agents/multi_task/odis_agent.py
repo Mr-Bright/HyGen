@@ -47,8 +47,11 @@ class ODISAgent(nn.Module):
         act, h_dec = self.decoder(inputs, hidden_state_dec, task, skill)
         return act, h_dec
 
+    # 根据state和action得到skill
     def forward_skill(self, inputs, hidden_state_enc, task, actions=None):
+        # 得到attention的embedding
         attn_out, hidden_state_enc = self.state_encoder(inputs, hidden_state_enc, task, actions=actions)
+        # attention的embedding输出到统一的skill_dim维度
         q_skill = self.encoder(attn_out)
         return q_skill, hidden_state_enc
 
@@ -128,6 +131,8 @@ class StateEncoder(nn.Module):
         self.query = nn.Linear(self.entity_embed_dim, self.attn_embed_dim)
         self.key = nn.Linear(self.entity_embed_dim, self.attn_embed_dim)
 
+    # hidden_state没有用到来着
+    # TODO 参考obs_encoder的写法，把hidden_state使用上，修改为轨迹数据输入
     def forward(self, states, hidden_state, task, actions=None):
         states = states.unsqueeze(1)
 
@@ -145,6 +150,7 @@ class StateEncoder(nn.Module):
         ally_states = th.stack(ally_states, dim=0)  # [n_agents, bs, 1, state_nf_al]
 
         _, current_attack_action_info, current_compact_action_states = task_decomposer.decompose_action_info(F.one_hot(actions.reshape(-1), num_classes=self.task2last_action_shape[task]))
+
         current_compact_action_states = current_compact_action_states.reshape(bs, n_agents, -1).permute(1, 0, 2).unsqueeze(2)
         ally_states = th.cat([ally_states, current_compact_action_states], dim=-1)
 
@@ -165,6 +171,9 @@ class StateEncoder(nn.Module):
 
         # we ought to do self-attention
         entity_embed = th.cat([ally_embed, enemy_embed], dim=0)
+
+        # 把下面这一块也替换成transformer结构的，输入hidden_state
+        
 
         # do attention
         proj_query = self.query(entity_embed).permute(1, 2, 0, 3).reshape(bs, n_entities, self.attn_embed_dim)
@@ -262,6 +271,7 @@ class ObsEncoder(nn.Module):
 
         return skill_inputs, h
 
+# 把经过了attention的embedding输出到统一的skill_dim维度
 class Encoder(nn.Module):
     def __init__(self, args):
         super(Encoder, self).__init__()

@@ -84,6 +84,7 @@ class ODISLearner:
             self.optimiser.step()
             self.optimiser.zero_grad()
 
+    # 实际的无监督技能训练
     def train_vae(self, batch: EpisodeBatch, t_env: int, episode_num: int, task: str):
         rewards = batch["reward"][:, :]
         actions = batch["actions"][:, :]
@@ -96,31 +97,39 @@ class ODISLearner:
         mac_out = []
         self.mac.init_hidden(batch.batch_size, task)
         for t in range(batch.max_seq_length):
+            # 输入t时刻的state和action，输出t时刻的skill
+            # TODO 修改forward_skill，使其根据轨迹输出skill，而不是根据当前state和action
             agent_outs = self.mac.forward_skill(batch, t=t, task=task, actions=actions[:, t, :])
             mac_out.append(agent_outs)
         mac_out = th.stack(mac_out, dim=1)  # Concat over time
 
         ######## beta-vae loss
         # prior loss
+        # self.c是跳过的步数，通常是1，一个episode最后一个不要
         seq_skill_input = F.gumbel_softmax(mac_out[:, :-self.c, :, :], dim=-1)
         kl_seq_skill = seq_skill_input * (th.log(seq_skill_input) - math.log(1 / self.main_args.skill_dim))
         enc_loss = kl_seq_skill.mean()
 
         dec_loss = 0.   ### batch time agent skill
+        # 初始化隐状态的目的是保留一个episode的hidden状态，等于是轨迹的信息
         self.mac.init_hidden(batch.batch_size, task)
-        for t in range(batch.max_seq_length-self.c):
+        for t in range(batch.max_seq_length-self.c):  
+            # 把上一步的skill作为输入，输出当前步的action
             seq_action_output = self.mac.forward_seq_action(batch, seq_skill_input[:, t, :, :], t, task=task)
             b, c, n, a = seq_action_output.size()
+            # 计算decoder得到的action和真实action的交叉熵，平均到每个动作，每个agent
             dec_loss += (F.cross_entropy(seq_action_output.reshape(-1, a), actions[:, t:t + self.c].squeeze(-1).reshape(-1), reduction="sum") / mask[:, t:t + self.c].sum()) / n
 
         vae_loss = dec_loss / (batch.max_seq_length - self.c) + self.main_args.beta * enc_loss
         loss = vae_loss
 
+        # 优化器优化步骤统一在mto中，这儿不用
         # self.optimiser.zero_grad()
         loss.backward()
 
         # self.optimiser.step()
 
+        # 日志输出
         if t_env - self.task2train_info[task]["log_stats_t"] >= self.task2args[task].learner_log_interval:
             # self.logger.log_stat(f"pretrain/{task}/grad_norm", grad_norm.item(), t_env)
             self.logger.log_stat(f"pretrain/{task}/vae_loss", vae_loss.item(), t_env)
@@ -305,7 +314,9 @@ class ODISLearner:
                                  (targets * mask[:, :-self.c]).sum().item() / (mask_elems * self.task2args[task].n_agents), t_env)
             self.task2train_info[task]["log_stats_t"] = t_env
 
+    # 训练无监督skill
     def pretrain(self, batch: EpisodeBatch, t_env: int, episode_num: int, task: str):
+        # 初始化优化器和日志输出
         if self.pretrain_steps == 0:
             self._reset_optimizer()
             for t in self.task2args:

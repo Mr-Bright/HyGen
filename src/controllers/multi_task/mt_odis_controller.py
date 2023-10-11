@@ -15,6 +15,7 @@ class ODISMAC:
         self.train_tasks = train_tasks
         self.task2scheme = task2scheme
         self.task2args = task2args
+        # 记录了每个task有多少个agent
         self.task2n_agents = {task: self.task2args[task].n_agents for task in train_tasks}
         self.main_args = main_args
 
@@ -42,6 +43,7 @@ class ODISMAC:
 
         # build agents
         task2input_shape_info = self._get_input_shape()
+        # 初始化odis agent
         self._build_agents(task2input_shape_info)
 
         self.hidden_states_enc = None
@@ -63,8 +65,11 @@ class ODISMAC:
 
         return agent_outs.view(ep_batch.batch_size, self.task2n_agents[task], -1)
 
+    # 根据state和action得到skill
     def forward_skill(self, ep_batch, t, task, test_mode=False, actions=None):
+        # 得到当前的state
         agent_inputs = ep_batch["state"][:, t]
+        # 这儿的hidden_states_enc在agent中没有用到，只是为了保持接口一致
         agent_outs, self.hidden_states_enc = self.agent.forward_skill(agent_inputs, self.hidden_states_enc, task, actions=actions)
 
         return agent_outs.view(ep_batch.batch_size, self.task2n_agents[task], -1)
@@ -136,6 +141,7 @@ class ODISMAC:
         # we always know we are in which task when do init_hidden
         n_agents = self.task2n_agents[task]
         hidden_states_enc, hidden_states_dec = self.agent.init_hidden()
+        # 用来保存轨迹内的hidden信息
         self.hidden_states_enc = hidden_states_enc.unsqueeze(0).expand(batch_size, n_agents, -1)
         self.hidden_states_dec = hidden_states_dec.unsqueeze(0).expand(batch_size, n_agents, -1)
 
