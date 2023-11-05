@@ -1,0 +1,26 @@
+{
+    // 使用 IntelliSense 了解相关属性。 
+    // 悬停以查看现有属性的描述。
+    // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "wandb_debug",
+            "type": "python",
+            "request": "launch",
+            "program": "src/main.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": ["--mto",
+                "--config=odis",
+                "--env-config=sc2_offline",
+                "--task-config=toy",
+                "--seed=2"
+            ],
+            "env":{
+                "CUDA_VISIBLE_DEVICES": "3",
+                "WANDB_API_KEY": "259b5343f66de66b2d60c5f2fbf156e924b72793",
+            }
+        }
+    ]
+}

@@ -8,17 +8,17 @@ class Logger:
     def __init__(self, console_logger):
         self.console_logger = console_logger
 
-        self.use_tb = False
+        self.use_wandb = False
         self.use_sacred = False
         self.use_hdf = False
 
         self.stats = defaultdict(lambda: [])
 
-    def setup_tb(self, directory_name):
+    def setup_wandb(self, directory_name):
         # Import here so it doesn't have to be installed if you don't use it
         t = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-        wandb.init(project="test_1025", name=t)  
-        self.use_tb = True
+        wandb.init(project="test_wandb", dir=directory_name, name=t)  
+        self.use_wandb = True
 
     def setup_sacred(self, sacred_run_dict):
         self.sacred_info = sacred_run_dict.info
@@ -27,7 +27,7 @@ class Logger:
     def log_stat(self, key, value, t, to_sacred=True):
         self.stats[key].append((t, value))
 
-        if self.use_tb:
+        if self.use_wandb:
             wandb.log({key: value}, step=t)
 
         if self.use_sacred and to_sacred:
@@ -42,7 +42,7 @@ class Logger:
         wandb.log({key: wandb.Histogram(value)}, step=t)
 
     #def log_embedding(self, key, value):
-        # WandB does not have a direct equivalent for add_embedding
+        
         
     def print_recent_stats(self):
         log_str = "Recent Stats | t_env: {:>10}\t Episode: {:>10}\n".format(self.stats["episode"][-1][0], self.stats["episode"][-1][1])
@@ -60,7 +60,10 @@ class Logger:
             log_str += "\n" if i % 4 == 0 else "\t"
 
         self.console_logger.info(log_str)
-
+        
+        def finish(self):
+            if self.use_wandb:
+                wandb.finish()
 
 
 # set up a custom logger

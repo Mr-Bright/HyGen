@@ -4,7 +4,7 @@ import time
 import threading
 import torch as th
 from types import SimpleNamespace as SN
-from utils.logging import Logger
+from utils.logging_wandb import Logger
 from utils.timehelper import time_left, time_str
 from os.path import dirname, abspath
 import copy
@@ -43,7 +43,11 @@ def run(_run, _config, _log):
         # only log tensorboard when in training mode
         # though we are always in training mode when we reach here
         tb_exp_direc = os.path.join(results_save_dir, 'tb_logs')
-        logger.setup_tb(tb_exp_direc)
+        logger.setup_wandb(tb_exp_direc)
+        
+    elif args.use_wandb and not args.evaluate:
+        wandb_exp_direc = os.path.join(results_save_dir, 'wandb_logs')
+        logger.setup_wandb(wandb_exp_direc)
 
     # set model save dir
     args.save_dir = os.path.join(results_save_dir, 'models')
