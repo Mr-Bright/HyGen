@@ -74,6 +74,13 @@ class ODISMAC:
         agent_outs, self.hidden_trajectory = self.agent.forward_skill(agent_inputs, self.hidden_trajectory, task, actions=actions)
 
         return agent_outs.view(ep_batch.batch_size, self.task2n_agents[task], -1)
+    # 用双向GRU来预测skill
+    def bidirection_forward_skill(self, ep_batch, task):
+        
+        agent_outs = self.agent.bidirection_forward_skill(ep_batch, task)
+        # return 估计需要修改
+        return agent_outs.view(ep_batch.batch_size, ep_batch.max_seq_length, self.task2n_agents[task], -1)
+    
 
     def forward_both(self, ep_batch, t, task, test_mode=False):
         agent_inputs = self._build_inputs(ep_batch, t, task)

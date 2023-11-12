@@ -25,6 +25,13 @@ class ODISAgent(nn.Module):
         self.obs_encoder = ObsEncoder(task2input_shape_info, task2decomposer, task2n_agents, decomposer, args)
         self.encoder = Encoder(args)
         self.decoder = Decoder(task2input_shape_info, task2decomposer, task2n_agents, decomposer, args)
+        
+        if args.use_bidirection_traj_encoder:
+            self.forward_GRU = nn.GRUCell(args.entity_embed_dim, args.entity_embed_dim)
+            self.backward_GRU = nn.GRUCell(args.entity_embed_dim, args.entity_embed_dim)
+            self.forward_output = nn.Linear(args.entity_embed_dim * 2, args.skill_dim)
+        
+        
 
     def init_hidden(self):
         # make hidden states on the same device as model
@@ -54,6 +61,45 @@ class ODISAgent(nn.Module):
         # attention的embedding输出到统一的skill_dim维度
         q_skill = self.encoder(attn_out)
         return q_skill, hidden_state_enc
+    
+    ################################################################################
+    def bidirection_forward_skill(self, ep_batch,  task):
+        # 得到当前的state和action
+        states = ep_batch["state"][:, :]
+        actions = ep_batch["actions"][:, :]
+        
+        bs = states.size(0)
+        n_agents = self.task2n_agents[task]
+        # 初始化前向和反向的隐藏状态
+        h_forward = self.encoder.q_skill.weight.new(1, self.args.entity_embed_dim).zero_().expand(bs * n_agents, -1)
+        h_backward = self.encoder.q_skill.weight.new(1, self.args.entity_embed_dim).zero_().expand(bs * n_agents, -1)
+
+        # 存储所有时间步的前向和反向输出
+        outputs_forward = []
+        outputs_backward = []
+        
+        for t in range(ep_batch.max_seq_length):
+            attn_out, _ = self.state_encoder(states[:,t], None, task, actions=actions[:,t,:])
+            h_forward = self.forward_GRU(attn_out, h_forward)
+            outputs_forward.append(h_forward)
+
+        # 反向传播
+        for t in reversed(range(ep_batch.max_seq_length)):
+            attn_out, _ = self.state_encoder(states[:,t], None, task, actions=actions[:,t,:])
+            h_backward = self.backward_GRU(attn_out, h_backward)
+            outputs_backward.append(h_backward)
+            
+        outputs_forward = th.stack(outputs_forward, dim=1)
+        outputs_backward = th.stack(outputs_backward, dim=1)
+
+        # 将前向和反向的输出连接在一起
+        out_bidirectional = th.cat((outputs_forward, outputs_backward), dim=-1)
+
+        # 使用全连接层进行最终输出
+        bidirection_out = self.forward_output(out_bidirectional)
+        
+        return bidirection_out
+              
 
     def forward_obs_skill(self, inputs, hidden_state_enc, task):
         attn_out, hidden_state_enc = self.obs_encoder(inputs, hidden_state_enc, task)
