@@ -11,13 +11,18 @@ class Logger:
         self.use_wandb = False
         self.use_sacred = False
         self.use_hdf = False
+        # 保证wandb step单增
+        self.max_t = -1
+        self.base_t = 0
 
         self.stats = defaultdict(lambda: [])
 
     def setup_wandb(self, directory_name):
         # Import here so it doesn't have to be installed if you don't use it
         t = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-        wandb.init(project="test_wandb", dir=directory_name, name=t)  
+        wandb.init(project="hybrid_MARL",
+                   dir=directory_name,
+                   name=t)  
         self.use_wandb = True
 
     def setup_sacred(self, sacred_run_dict):
@@ -28,6 +33,12 @@ class Logger:
         self.stats[key].append((t, value))
 
         if self.use_wandb:
+            if t >= self.max_t:
+                self.max_t = t
+            else:
+                self.base_t = self.max_t
+            t += self.base_t
+             
             wandb.log({key: value}, step=t)
 
         if self.use_sacred and to_sacred:
@@ -39,6 +50,12 @@ class Logger:
                 self.sacred_info[key] = [value]
 
     def log_histogram(self, key, value, t):
+        if t >= self.max_t:
+            self.max_t = t
+        else:
+            self.base_t = self.max_t
+        
+        t += self.base_t
         wandb.log({key: wandb.Histogram(value)}, step=t)
 
     #def log_embedding(self, key, value):
