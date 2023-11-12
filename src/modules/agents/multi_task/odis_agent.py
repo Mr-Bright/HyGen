@@ -130,6 +130,13 @@ class StateEncoder(nn.Module):
         # we ought to do attention
         self.query = nn.Linear(self.entity_embed_dim, self.attn_embed_dim)
         self.key = nn.Linear(self.entity_embed_dim, self.attn_embed_dim)
+        
+        self.use_traj_encoder = args.use_traj_encoder
+        
+        # 用于计算轨迹的LSTM
+        if self.use_traj_encoder:
+            self.rnn = nn.GRUCell(self.entity_embed_dim, self.entity_embed_dim)
+            self.rnn_output = nn.Linear(self.entity_embed_dim, self.entity_embed_dim)
 
     # hidden_state没有用到来着
     # TODO 参考obs_encoder的写法，把hidden_state使用上，修改为轨迹数据输入
@@ -184,6 +191,14 @@ class StateEncoder(nn.Module):
         attn_out = th.bmm(proj_value, attn_score).squeeze(1).permute(0, 2, 1)[:, :n_agents, :]  #.reshape(bs, n_entities, self.entity_embed_dim)[:, :n_agents, :]
 
         attn_out = attn_out.reshape(bs * n_agents, self.entity_embed_dim)
+        
+        ######################################################################### 
+        # 用计算后的attention embedding计算hidden_state
+        if self.use_traj_encoder:
+            hidden_state = hidden_state.reshape(bs * n_agents, self.entity_embed_dim)
+            hidden_state = self.rnn(attn_out, hidden_state)
+            attn_out = self.rnn_output(hidden_state)
+            hidden_state = hidden_state.reshape(bs , n_agents, self.entity_embed_dim)
 
         return attn_out, hidden_state
 

@@ -18,8 +18,9 @@
                 "--seed=2"
             ],
             "env":{
-                "CUDA_VISIBLE_DEVICES": "3",
-                "WANDB_API_KEY": "259b5343f66de66b2d60c5f2fbf156e924b72793",
+                "CUDA_VISIBLE_DEVICES": "1",
+                // "WANDB_API_KEY": "259b5343f66de66b2d60c5f2fbf156e924b72793",
+                "WANDB_API_KEY": "1de9d7f978f2d0084e0fa2694af45584a1eb31e8",
             }
         }
     ]

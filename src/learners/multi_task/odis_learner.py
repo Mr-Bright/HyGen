@@ -55,6 +55,9 @@ class ODISLearner:
         self.beta = main_args.beta
         self.alpha = main_args.coef_conservative
         self.phi = main_args.coef_dist
+        
+        #双向GRU
+        self.use_bidirection_traj_encoder = main_args.use_bidirection_traj_encoder
 
         self.pretrain_steps = 0
         self.training_steps = 0
@@ -96,12 +99,17 @@ class ODISLearner:
         # Calculate estimated Q-Values
         mac_out = []
         self.mac.init_hidden(batch.batch_size, task)
-        for t in range(batch.max_seq_length):
-            # 输入t时刻的state和action，输出t时刻的skill
-            # TODO 修改forward_skill，使其根据轨迹输出skill，而不是根据当前state和action
-            agent_outs = self.mac.forward_skill(batch, t=t, task=task, actions=actions[:, t, :])
-            mac_out.append(agent_outs)
-        mac_out = th.stack(mac_out, dim=1)  # Concat over time
+        if not self.use_bidirection_traj_encoder:
+            for t in range(batch.max_seq_length):
+                # 输入t时刻的state和action，输出t时刻的skill
+                # TODO 修改forward_skill，使其根据轨迹输出skill，而不是根据当前state和action
+                agent_outs = self.mac.forward_skill(batch, t=t, task=task, actions=actions[:, t, :])
+                mac_out.append(agent_outs)
+            mac_out = th.stack(mac_out, dim=1)  # Concat over time
+        else:
+            # 是用双向GRU，输入整个轨迹，输出整个轨迹的skill
+            mac_out = self.mac.bidirection_forward_skill(batch, task=task)
+            
 
         ######## beta-vae loss
         # prior loss
@@ -154,10 +162,14 @@ class ODISLearner:
         # Calculate estimated Q-Values
         mac_out = []
         self.mac.init_hidden(batch.batch_size, task)
-        for t in range(batch.max_seq_length):
-            agent_outs = self.mac.forward_skill(batch, t=t, task=task, actions=actions[:, t, :])
-            mac_out.append(agent_outs)
-        mac_out = th.stack(mac_out, dim=1)  # Concat over time
+
+        if not self.use_bidirection_traj_encoder:
+            for t in range(batch.max_seq_length):
+                agent_outs = self.mac.forward_skill(batch, t=t, task=task, actions=actions[:, t, :])
+                mac_out.append(agent_outs)
+            mac_out = th.stack(mac_out, dim=1)  # Concat over time
+        else:
+            mac_out = self.mac.bidirection_forward_skill(batch, task=task)
 
         ######## beta-vae loss
         # prior loss
@@ -196,11 +208,16 @@ class ODISLearner:
         with th.no_grad():
             new_actions = []
             self.mac.init_hidden(batch.batch_size, task)
-            for t in range(batch.max_seq_length):
-                action = self.mac.forward_skill(batch, t=t, task=task, actions=actions[:, t, :])
-                label_action = action.max(dim=-1)[1].unsqueeze(-1)
-                new_actions.append(label_action)
-            actions = th.stack(new_actions, dim=1)
+            if not self.use_bidirection_traj_encoder:
+                for t in range(batch.max_seq_length):
+                    action = self.mac.forward_skill(batch, t=t, task=task, actions=actions[:, t, :])
+                    label_action = action.max(dim=-1)[1].unsqueeze(-1)
+                    new_actions.append(label_action)
+                actions = th.stack(new_actions, dim=1)
+            else:
+                # TODO 大概需要改一下
+                actions = self.mac.bidirection_forward_skill(batch, task=task)
+                actions = actions.max(dim=-1)[1].unsqueeze(-1)
         ####
 
         #### representation
