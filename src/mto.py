@@ -10,6 +10,7 @@ from os.path import dirname, abspath
 import copy
 import json
 import shutil
+import wandb
 
 from learners.multi_task import REGISTRY as le_REGISTRY
 from runners.multi_task import REGISTRY as r_REGISTRY
@@ -370,6 +371,7 @@ def run_sequential(args, logger):
         os.makedirs(save_path, exist_ok=True)
         logger.console_logger.info("Saving models to {}".format(save_path))
         learner.save_models(save_path)
+        wandb.finish()
 
     # 否则读入预训练好的模型
     elif hasattr(main_args, "pretrain"):

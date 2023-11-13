@@ -215,7 +215,6 @@ class ODISLearner:
                     new_actions.append(label_action)
                 actions = th.stack(new_actions, dim=1)
             else:
-                # TODO 大概需要改一下
                 actions = self.mac.bidirection_forward_skill(batch, task=task)
                 actions = actions.max(dim=-1)[1].unsqueeze(-1)
         ####
