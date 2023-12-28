@@ -29,7 +29,7 @@ class ODISAgent(nn.Module):
         if args.use_bidirection_traj_encoder:
             self.forward_GRU = nn.GRUCell(args.entity_embed_dim, args.entity_embed_dim)
             self.backward_GRU = nn.GRUCell(args.entity_embed_dim, args.entity_embed_dim)
-            self.forward_output = nn.Linear(args.entity_embed_dim * 2, args.skill_dim)
+            self.forward_linear = nn.Linear(args.entity_embed_dim * 2, args.skill_dim)
         
         
 
@@ -96,7 +96,7 @@ class ODISAgent(nn.Module):
         out_bidirectional = th.cat((outputs_forward, outputs_backward), dim=-1)
 
         # 使用全连接层进行最终输出
-        bidirection_out = self.forward_output(out_bidirectional)
+        bidirection_out = self.forward_linear(out_bidirectional)
         
         return bidirection_out
               

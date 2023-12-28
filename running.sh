@@ -1,1 +1,1 @@
-CUDA_VISIBLE_DEVICES=1 WANDB_API_KEY=1de9d7f978f2d0084e0fa2694af45584a1eb31e8 python src/main.py --mto --config=odis --env-config=sc2_offline --task-config=toy --seed=1
+CUDA_VISIBLE_DEVICES=1 WANDB_API_KEY=1de9d7f978f2d0084e0fa2694af45584a1eb31e8 python src/main.py --mto --config=odis --env-config=sc2_offline --task-config=marine-easy-expert --seed=1

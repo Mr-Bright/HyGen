@@ -306,6 +306,13 @@ class ODISLearner:
         self.mac.agent.encoder.requires_grad_(False)
         self.mac.agent.state_encoder.requires_grad_(False)
         self.mac.agent.decoder.requires_grad_(False)
+        ###########################
+        if self.use_bidirection_traj_encoder:
+            self.mac.agent.forward_GRU.requires_grad_(False)
+            self.mac.agent.backward_GRU.requires_grad_(False)
+            self.mac.agent.forward_linear.requires_grad_(False)
+        
+        
         # self.optimiser.zero_grad()
         loss.backward()
         # grad_norm = th.nn.utils.clip_grad_norm_(self.params, self.main_args.grad_norm_clip)
