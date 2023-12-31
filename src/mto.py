@@ -391,7 +391,11 @@ def run_sequential(args, logger):
 
     logger.console_logger.info(
         "Beginning multi-task offline training with {} timesteps for each task".format(main_args.t_max))
-    train_sequential(main_args.train_tasks, main_args, logger, learner, task2args, task2runner, task2offlinedata)
+    
+    #train_sequential(main_args.train_tasks, main_args, logger, learner, task2args, task2runner, task2offlinedata)
+    
+    # hybrid training
+    train_hybrid_55(main_args.train_tasks, main_args, logger, learner, task2args, task2runner, task2offlinedata, task2buffer=task2buffer)
 
     # save the final model
     if main_args.save_model:
@@ -418,3 +422,146 @@ def args_sanity_check(config, _log):
         config["test_nepisode"] = (config["test_nepisode"] // config["batch_size_run"]) * config["batch_size_run"]
 
     return config
+
+# online和offline数据各取一半
+def train_hybrid_55(train_tasks, main_args, logger, learner, task2args, task2runner, task2offlinedata, t_start=0,
+                     pretrain=False, test_task2offlinedata=None, task2buffer=None):
+    ########## start training ##########
+    t_env = t_start
+    episode = 0  # episode does not matter
+    t_max = main_args.t_max if not pretrain else main_args.pretrain_steps
+    model_save_time = 0
+    last_test_T = 0
+    last_log_T = 0
+    start_time = time.time()
+    last_time = start_time
+    test_time_total = 0
+    test_start_time = 0
+
+    # get some common information
+    batch_size_train = main_args.batch_size
+    batch_size_run = main_args.batch_size_run
+
+    # do test before training
+    n_test_runs = max(1, main_args.test_nepisode // batch_size_run)
+    test_start_time = time.time()
+
+
+    # 这个是测试的部分，每个task都测试一下
+    with th.no_grad():
+        for task in main_args.test_tasks:
+            task2runner[task].t_env = t_env
+            for _ in range(n_test_runs):
+                task2runner[task].run(test_mode=True, pretrain=pretrain)
+
+        # test_pretrain for pretrained tasks
+        if pretrain and test_task2offlinedata is not None:
+            for task, data_buffer in test_task2offlinedata.items():
+                episode_sample = data_buffer.sample(batch_size_train * 3)
+
+                if episode_sample.device != task2args[task].device:
+                    episode_sample.to(task2args[task].device)
+
+                if hasattr(learner, 'test_pretrain'):
+                    learner.test_pretrain(episode_sample, t_env, episode, task)
+                else:
+                    raise ValueError("Do test_pretrain with a learner that does not have a `test_pretrain` method!")
+
+    test_time_total += time.time() - test_start_time
+
+    # 开始训练
+    while t_env < t_max:
+        # shuffle tasks
+        np.random.shuffle(train_tasks)
+        # train each task
+        for task in train_tasks:
+            
+            # online 运行一次获得经验
+            online_exp = task2runner[task].run(test_mode=False)
+            task2buffer[task].insert_episode_batch(online_exp)
+            
+            # 获得这个task的episode的数据
+            # 从offline buffer中取一半数据，从online buffer中取一半数据
+            if task2buffer[task].can_sample(batch_size_train//2):
+                offline_sample = task2offlinedata[task].sample(batch_size_train//2)
+                online_sample = task2buffer[task].sample(batch_size_train//2)
+                # TODO 把两个buffer的数据拼接起来
+                episode_sample = offline_sample.concatenate(online_sample)
+            else:
+                episode_sample = task2offlinedata[task].sample(batch_size_train)
+            
+
+            if episode_sample.device != task2args[task].device:
+                episode_sample.to(task2args[task].device)
+
+            if pretrain:
+                if hasattr(learner, 'pretrain'):
+                    # 这个应该是训练无监督技能的部分，参数episode没有啥用，用于日志记录
+                    terminated = learner.pretrain(episode_sample, t_env, episode, task)
+                else:
+                    raise ValueError("Do pretraining with a learner that does not have a `pretrain` method!")
+            else:
+                # 这个是训练high-policy的部分
+                terminated = learner.train(episode_sample, t_env, episode, task)
+
+            if terminated is not None and terminated:
+                break
+
+            t_env += 1
+            episode += batch_size_run
+        # 统一更新优化器参数
+        learner.update(pretrain=pretrain)
+
+        if terminated is not None and terminated:
+            logger.console_logger.info(f"Terminate training by the learner at t_env = {t_env}. Finish training.")
+            break
+
+        # 每隔一段时间测试一下
+        # Execute test runs once in a while & final evaluation
+        if (t_env - last_test_T) / main_args.test_interval >= 1 or t_env >= t_max:
+            test_start_time = time.time()
+
+            with th.no_grad():
+                for task in main_args.test_tasks:
+                    task2runner[task].t_env = t_env
+                    for _ in range(n_test_runs):
+                        task2runner[task].run(test_mode=True, pretrain=pretrain)
+
+                # test_pretrain for pretrained tasks
+                if pretrain and test_task2offlinedata is not None:
+                    for task, data_buffer in test_task2offlinedata.items():
+                        episode_sample = data_buffer.sample(batch_size_train * 10)
+
+                        if episode_sample.device != task2args[task].device:
+                            episode_sample.to(task2args[task].device)
+
+                        if hasattr(learner, 'test_pretrain'):
+                            learner.test_pretrain(episode_sample, t_env, episode, task)
+                        else:
+                            raise ValueError(
+                                "Do test_pretrain with a learner that does not have a `test_pretrain` method!")
+
+            test_time_total += time.time() - test_start_time
+
+            logger.console_logger.info("Step: {} / {}".format(t_env, t_max))
+            logger.console_logger.info("Estimated time left: {}. Time passed: {}. Test time cost: {}".format(
+                time_left(last_time, last_test_T, t_env, t_max), time_str(time.time() - start_time),
+                time_str(test_time_total)
+            ))
+            last_time = time.time()
+            last_test_T = t_env
+
+        if main_args.save_model and (t_env - model_save_time >= main_args.save_model_interval or model_save_time == 0):
+            if pretrain:
+                save_path = os.path.join(main_args.pretrain_save_dir, str(t_env))
+            else:
+                save_path = os.path.join(main_args.save_dir, str(t_env))
+            os.makedirs(save_path, exist_ok=True)
+            logger.console_logger.info("Saving models to {}".format(save_path))
+            learner.save_models(save_path)
+            model_save_time = t_env
+
+        if (t_env - last_log_T) >= main_args.log_interval:
+            last_log_T = t_env
+            logger.log_stat("episode", episode, t_env)
+            logger.print_recent_stats()
