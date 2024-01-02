@@ -486,7 +486,7 @@ def train_hybrid_55(train_tasks, main_args, logger, learner, task2args, task2run
                 offline_sample = task2offlinedata[task].sample(batch_size_train//2)
                 online_sample = task2buffer[task].sample(batch_size_train//2)
                 # TODO 把两个buffer的数据拼接起来
-                episode_sample = offline_sample.concatenate(online_sample)
+                episode_sample = concatenate_episode_sample(online_sample, offline_sample)
             else:
                 episode_sample = task2offlinedata[task].sample(batch_size_train)
             
@@ -565,3 +565,16 @@ def train_hybrid_55(train_tasks, main_args, logger, learner, task2args, task2run
             last_log_T = t_env
             logger.log_stat("episode", episode, t_env)
             logger.print_recent_stats()
+
+def concatenate_episode_sample(self, online_sample, offline_sample):
+    
+    trans_data = offline_sample.data
+    offline_sample.data = SN()
+    offline_sample.data.transition_data = trans_data
+    
+    for k, v in online_sample.data.transition_data.items():
+        online_sample.data.transition_data[k] = np.concatenate((v, offline_sample.data.transition_data[k]), axis=0)
+
+    episode_sample = online_sample
+    
+    return episode_sample
