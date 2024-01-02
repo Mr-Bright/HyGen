@@ -374,11 +374,11 @@ def run_sequential(args, logger):
         wandb.finish()
 
     # 否则读入预训练好的模型
-    elif hasattr(main_args, "pretrain"):
-        # load models from pretrained model directory
-        load_path = os.path.join(main_args.pretrain_save_dir, str(main_args.pretrain_steps))
-        learner.load_models(load_path)
-        logger.console_logger.info("Load pretrained models from {}".format(load_path))
+    # elif hasattr(main_args, "pretrain"):
+    #     # load models from pretrained model directory
+    #     load_path = os.path.join(main_args.pretrain_save_dir, str(main_args.pretrain_steps))
+    #     learner.load_models(load_path)
+    #     logger.console_logger.info("Load pretrained models from {}".format(load_path))
 
     # initialize training data for each task
     task2offlinedata = {}
