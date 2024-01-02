@@ -47,4 +47,8 @@ max_agent: 15
 #########################################
 # encoder params
 use_traj_encoder: False
-use_bidirection_traj_encoder: True
+use_bidirection_traj_encoder: False
+
+###########################################
+#hybird
+train_hybrid: True

@@ -389,13 +389,18 @@ def run_sequential(args, logger):
                                                offline_data_size=args.offline_data_size,
                                                random_sample=args.offline_data_shuffle)
 
-    logger.console_logger.info(
+    
+    if main_args.train_hybrid:
+        # hybrid training
+        logger.console_logger.info(
+        "Beginning multi-task ==hybrid== training with {} timesteps for each task".format(main_args.t_max))
+        train_hybrid_55(main_args.train_tasks, main_args, logger, learner, task2args, task2runner, task2offlinedata, task2buffer=task2buffer)
+    else:
+        logger.console_logger.info(
         "Beginning multi-task offline training with {} timesteps for each task".format(main_args.t_max))
+        train_sequential(main_args.train_tasks, main_args, logger, learner, task2args, task2runner, task2offlinedata)
     
-    #train_sequential(main_args.train_tasks, main_args, logger, learner, task2args, task2runner, task2offlinedata)
     
-    # hybrid training
-    train_hybrid_55(main_args.train_tasks, main_args, logger, learner, task2args, task2runner, task2offlinedata, task2buffer=task2buffer)
 
     # save the final model
     if main_args.save_model:
