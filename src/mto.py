@@ -132,7 +132,7 @@ def init_tasks(task_list, main_args, logger):
             "actions": ("actions_onehot", [OneHot(out_dim=task_args.n_actions)])
         }
 
-        task2buffer[task] = ReplayBuffer(scheme, groups, 1, env_info["episode_limit"] + 1,
+        task2buffer[task] = ReplayBuffer(scheme, groups, main_args.online_buffer_size, env_info["episode_limit"] + 1,
                                          preprocess=preprocess,
                                          device="cpu" if task_args.buffer_cpu_only else task_args.device)
 
@@ -481,16 +481,17 @@ def train_hybrid_55(train_tasks, main_args, logger, learner, task2args, task2run
         # train each task
         for task in train_tasks:
             
-            # online 运行一次获得经验
-            online_exp = task2runner[task].run(test_mode=False)
-            task2buffer[task].insert_episode_batch(online_exp)
+            # online 运行获得经验,跳步运行利于模型稳定
+            if t_env % main_args.online_interval == 0:
+                online_exp = task2runner[task].run(test_mode=False)
+                task2buffer[task].insert_episode_batch(online_exp)
             
             # 获得这个task的episode的数据
             # 从offline buffer中取一半数据，从online buffer中取一半数据
             if task2buffer[task].can_sample(batch_size_train//2):
                 offline_sample = task2offlinedata[task].sample(batch_size_train//2)
                 online_sample = task2buffer[task].sample(batch_size_train//2)
-                # TODO 把两个buffer的数据拼接起来
+                # 把两个buffer的数据拼接起来
                 episode_sample = concatenate_episode_sample(online_sample, offline_sample)
             else:
                 episode_sample = task2offlinedata[task].sample(batch_size_train)
@@ -571,15 +572,24 @@ def train_hybrid_55(train_tasks, main_args, logger, learner, task2args, task2run
             logger.log_stat("episode", episode, t_env)
             logger.print_recent_stats()
 
-def concatenate_episode_sample(self, online_sample, offline_sample):
+def concatenate_episode_sample(online_sample, offline_sample):
     
     trans_data = offline_sample.data
-    offline_sample.data = SN()
-    offline_sample.data.transition_data = trans_data
+    max_seq_length = max(online_sample.max_seq_length, offline_sample.max_seq_length)
     
-    for k, v in online_sample.data.transition_data.items():
-        online_sample.data.transition_data[k] = np.concatenate((v, offline_sample.data.transition_data[k]), axis=0)
+    for k, online_value in online_sample.data.transition_data.items():
+        offline_value = trans_data[k]
+        online_value_shape = list(online_value.shape)
+        offline_value_shape = list(offline_value.shape)
+        online_value_shape[1] = max_seq_length - online_value_shape[1]
+        offline_value_shape[1] = max_seq_length - offline_value_shape[1]
+        online_value = th.cat([online_value, th.zeros(online_value_shape, device=online_value.device)], dim=1)
+        offline_value = th.cat([offline_value, th.zeros(offline_value_shape, device=offline_value.device, dtype=offline_value.dtype)], dim=1)
+        online_sample.data.transition_data[k] = th.concat([online_value, offline_value], dim=0).type(offline_value.dtype)
+        
 
     episode_sample = online_sample
+    episode_sample.batch_size = online_sample.batch_size + offline_sample.batch_size
+    episode_sample.max_seq_length = max_seq_length
     
     return episode_sample
