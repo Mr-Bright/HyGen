@@ -481,8 +481,8 @@ def train_hybrid_55(train_tasks, main_args, logger, learner, task2args, task2run
         # train each task
         for task in train_tasks:
             
-            # online 运行获得经验,跳步运行利于模型稳定
-            if t_env % main_args.online_interval == 0:
+            # online 运行获得经验
+            for i in range(main_args.online_interval):
                 online_exp = task2runner[task].run(test_mode=False)
                 task2buffer[task].insert_episode_batch(online_exp)
             
