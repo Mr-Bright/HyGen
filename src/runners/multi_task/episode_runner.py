@@ -49,7 +49,8 @@ class EpisodeRunner:
         self.batch = self.new_batch()
         self.env.reset()
         self.t = 0
-        
+    
+    # 得到最近window_size个episode的平均胜率
     def get_window_won_rate(self, window_size=10):
         if len(self.win_record) < window_size:
             return 0
