@@ -487,14 +487,16 @@ def train_hybrid_55(train_tasks, main_args, logger, learner, task2args, task2run
                 task2buffer[task].insert_episode_batch(online_exp)
             
             # 获得这个task的episode的数据
-            # 从offline buffer中取一半数据，从online buffer中取一半数据
-            if task2buffer[task].can_sample(batch_size_train//2):
-                offline_sample = task2offlinedata[task].sample(batch_size_train//2)
-                online_sample = task2buffer[task].sample(batch_size_train//2)
-                # 把两个buffer的数据拼接起来
-                episode_sample = concatenate_episode_sample(online_sample, offline_sample)
+            if main_args.hybrid_mode == 'fix':
+                hybrid_ratio = main_args.hybrid_ratio
+            elif main_args.hybrid_mode == 'linear':
+                hybrid_ratio = main_args.hybrid_begin_ratio - (t_env / t_max) * (main_args.hybrid_begin_ratio - main_args.hybrid_end_ratio) 
+            elif main_args.hybrid_mode == 'dynamic':
+                pass
             else:
-                episode_sample = task2offlinedata[task].sample(batch_size_train)
+                raise ValueError("hybrid_mode must be one of fix, linear, dynamic")   
+            
+            episode_sample = get_episode_sample(task2buffer[task], task2offlinedata[task], batch_size_train, hybrid_ratio)
             
 
             if episode_sample.device != task2args[task].device:
@@ -593,3 +595,17 @@ def concatenate_episode_sample(online_sample, offline_sample):
     episode_sample.max_seq_length = max_seq_length
     
     return episode_sample
+
+def get_episode_sample(online_buffer, offline_buffer, batch_size, hybrid_ratio):
+    offline_size = int(batch_size * hybrid_ratio)
+    online_size = batch_size - offline_size
+    
+    if online_buffer.can_sample(online_size):
+        online_sample = online_buffer.sample(online_size)
+        offline_sample = offline_buffer.sample(offline_size)
+        episode_sample = concatenate_episode_sample(online_sample, offline_sample)
+    else:
+        episode_sample = offline_buffer.sample(batch_size)
+        
+    return episode_sample
+    
