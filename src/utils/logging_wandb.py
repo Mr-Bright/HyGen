@@ -38,7 +38,7 @@ class Logger:
             else:
                 self.base_t = self.max_t
             t += self.base_t
-             
+            
             wandb.log({key: value}, step=t)
 
         if self.use_sacred and to_sacred:
