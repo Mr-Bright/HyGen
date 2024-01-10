@@ -16,4 +16,5 @@ tensorboardx
 torch
 torchaudio
 torchvision
+wandb
 git+https://github.com/oxwhirl/smac.git
