@@ -485,14 +485,24 @@ def train_hybrid_55(train_tasks, main_args, logger, learner, task2args, task2run
             for i in range(main_args.online_interval):
                 online_exp = task2runner[task].run(test_mode=False)
                 task2buffer[task].insert_episode_batch(online_exp)
+                
+            
             
             # 获得这个task的episode的数据
             if main_args.hybrid_mode == 'fix':
                 hybrid_ratio = main_args.hybrid_ratio
+                
             elif main_args.hybrid_mode == 'linear':
                 hybrid_ratio = main_args.hybrid_begin_ratio - (t_env / t_max) * (main_args.hybrid_begin_ratio - main_args.hybrid_end_ratio) 
+                
             elif main_args.hybrid_mode == 'dynamic':
-                pass
+                # TODO compute the cur_performance and offline_performance_bottleneck
+                cur_performance = task2runner[task].get_window_won_rate(window_size=main_args.performance_window_size)
+                data_quality = main_args.train_tasks_data_quality[task]
+                offline_performance_bottleneck = main_args.offline_data_quality[task][data_quality]
+                
+                hybrid_ratio = (main_args.hybrid_end_ratio - main_args.hybrid_begin_ratio) / (offline_performance_bottleneck ** 2) * (cur_performance **2) + main_args.hybrid_begin_ratio
+                
             else:
                 raise ValueError("hybrid_mode must be one of fix, linear, dynamic")   
             

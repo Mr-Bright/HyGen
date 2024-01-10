@@ -128,6 +128,16 @@ if __name__ == '__main__':
     
     task_config = _get_config(params, "--task-config", "tasks")
     config_dict = recursive_dict_update(config_dict, task_config)
+    
+    ###########################################################################################
+    # 加载offline data的质量配置文件
+    with open(os.path.join(os.path.dirname(__file__), "config", "tasks", "offline_data_quality.yaml"), "r") as f:
+        try:
+            data_quality_dict = yaml.load(f)
+        except yaml.YAMLError as exc:
+            assert False, "{}.yaml error: {}"
+    config_dict = recursive_dict_update(config_dict, data_quality_dict)
+    ###########################################################################################
 
     config_dict = recursive_dict_update(config_dict, _get_argv_config(params))
     

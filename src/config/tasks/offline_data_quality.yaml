@@ -1,0 +1,11 @@
+offline_data_quality: {
+    "3m": {
+        "expert" : 0.99,
+        "medium-expert" : 0.99,
+        "medium" : 0.99,
+        "medium-replay" : 0.99,
+        },
+    
+
+
+}

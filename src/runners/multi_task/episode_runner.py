@@ -23,6 +23,10 @@ class EpisodeRunner:
         self.test_returns = []
         self.train_stats = {}
         self.test_stats = {}
+        
+        #################################################################
+        # 用于记录每个episode的return的信息
+        self.win_record = []
 
         # Log the first run
         self.log_train_stats_t = -1000000
@@ -45,6 +49,12 @@ class EpisodeRunner:
         self.batch = self.new_batch()
         self.env.reset()
         self.t = 0
+        
+    def get_window_won_rate(self, window_size=10):
+        if len(self.win_record) < window_size:
+            return 0
+        else:
+            return sum(self.win_record[-window_size:]) / window_size
 
     def run(self, test_mode=False, nolog=False, pretrain=False):
         self.reset()
@@ -100,6 +110,10 @@ class EpisodeRunner:
         cur_stats["ep_length"] = self.t + cur_stats.get("ep_length", 0)
 
         cur_returns.append(episode_return)
+        
+        #################################################################
+        # 记录每个episode的win信息
+        self.win_record.append(cur_stats["battle_won"] / cur_stats["n_episodes"])
 
         if not nolog:
             if test_mode and len(self.test_returns) == self.args.test_nepisode:
