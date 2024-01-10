@@ -397,7 +397,7 @@ def run_sequential(args, logger):
         train_hybrid_55(main_args.train_tasks, main_args, logger, learner, task2args, task2runner, task2offlinedata, task2buffer=task2buffer)
     else:
         logger.console_logger.info(
-        "Beginning multi-task offline training with {} timesteps for each task".format(main_args.t_max))
+        "Beginning multi-task ==offline== training with {} timesteps for each task".format(main_args.t_max))
         train_sequential(main_args.train_tasks, main_args, logger, learner, task2args, task2runner, task2offlinedata)
     
     
