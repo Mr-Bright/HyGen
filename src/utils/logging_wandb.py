@@ -17,12 +17,12 @@ class Logger:
 
         self.stats = defaultdict(lambda: [])
 
-    def setup_wandb(self, directory_name):
+    def setup_wandb(self, directory_name, run_name):
         # Import here so it doesn't have to be installed if you don't use it
         t = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
         wandb.init(project="hybrid_MARL",
                    dir=directory_name,
-                   name=t)  
+                   name=run_name +" - "+ t)  
         self.use_wandb = True
 
     def setup_sacred(self, sacred_run_dict):

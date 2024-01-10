@@ -48,7 +48,7 @@ def run(_run, _config, _log):
         
     elif args.use_wandb and not args.evaluate:
         wandb_exp_direc = os.path.join(results_save_dir, 'wandb_logs')
-        logger.setup_wandb(wandb_exp_direc)
+        logger.setup_wandb(wandb_exp_direc, run_name=args.run_name)
 
     # set model save dir
     args.save_dir = os.path.join(results_save_dir, 'models')
