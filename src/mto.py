@@ -496,7 +496,7 @@ def train_hybrid_55(train_tasks, main_args, logger, learner, task2args, task2run
                 hybrid_ratio = main_args.hybrid_begin_ratio - (t_env / t_max) * (main_args.hybrid_begin_ratio - main_args.hybrid_end_ratio) 
                 
             elif main_args.hybrid_mode == 'dynamic':
-                # TODO compute the cur_performance and offline_performance_bottleneck
+                #compute the cur_performance and offline_performance_bottleneck
                 cur_performance = task2runner[task].get_window_won_rate(window_size=main_args.performance_window_size)
                 data_quality = main_args.train_tasks_data_quality[task]
                 offline_performance_bottleneck = main_args.offline_data_quality[task][data_quality]
