@@ -371,7 +371,6 @@ def run_sequential(args, logger):
         os.makedirs(save_path, exist_ok=True)
         logger.console_logger.info("Saving models to {}".format(save_path))
         learner.save_models(save_path)
-        wandb.finish()
 
     # 否则读入预训练好的模型
     elif hasattr(main_args, "pretrain"):
@@ -413,6 +412,7 @@ def run_sequential(args, logger):
         task2runner[task].close_env()
     logger.console_logger.info(f"Finished Training")
 
+    wandb.finish() 
 
 def args_sanity_check(config, _log):
     # set CUDA flags
