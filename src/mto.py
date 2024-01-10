@@ -48,7 +48,7 @@ def run(_run, _config, _log):
         
     elif args.use_wandb and not args.evaluate:
         wandb_exp_direc = os.path.join(results_save_dir, 'wandb_logs')
-        logger.setup_wandb(wandb_exp_direc)
+        logger.setup_wandb(wandb_exp_direc, run_name=args.run_name)
 
     # set model save dir
     args.save_dir = os.path.join(results_save_dir, 'models')
@@ -396,7 +396,7 @@ def run_sequential(args, logger):
         train_hybrid_55(main_args.train_tasks, main_args, logger, learner, task2args, task2runner, task2offlinedata, task2buffer=task2buffer)
     else:
         logger.console_logger.info(
-        "Beginning multi-task offline training with {} timesteps for each task".format(main_args.t_max))
+        "Beginning multi-task ==offline== training with {} timesteps for each task".format(main_args.t_max))
         train_sequential(main_args.train_tasks, main_args, logger, learner, task2args, task2runner, task2offlinedata)
     
     
