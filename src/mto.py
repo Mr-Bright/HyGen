@@ -520,7 +520,7 @@ def train_hybrid_55(train_tasks, main_args, logger, learner, task2args, task2run
                     raise ValueError("Do pretraining with a learner that does not have a `pretrain` method!")
             else:
                 # 这个是训练high-policy的部分
-                terminated = learner.train(episode_sample, t_env, episode, task)
+                terminated = learner.train(episode_sample, t_env, episode, task, cql_param=hybrid_ratio)
 
             if terminated is not None and terminated:
                 break

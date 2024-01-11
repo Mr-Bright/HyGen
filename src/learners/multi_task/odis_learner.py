@@ -195,7 +195,7 @@ class ODISLearner:
             skill_dist = seq_skill_input.reshape(-1, self.skill_dim).mean(dim=0)
             self.logger.log_stat(f"pretrain/{task}/test_skill_class{i+1}", skill_dist[i].item(), t_env)
 
-    def train_policy(self, batch: EpisodeBatch, t_env: int, episode_num: int, task: str):
+    def train_policy(self, batch: EpisodeBatch, t_env: int, episode_num: int, task: str, cql_param: float):
         # Get the relevant quantities
         rewards = batch["reward"][:, :]
         actions = batch["actions"][:, :]
@@ -300,7 +300,9 @@ class ODISLearner:
         # Normal L2 loss, take mean over actual data
         td_loss = (masked_td_error ** 2).sum() / mask[:, :-self.c].sum()
         cons_loss = masked_cons_error.sum() / mask.sum()
-        loss = td_loss + self.alpha * cons_loss + self.phi * dist_loss
+        
+        # add cql loss param
+        loss = td_loss + cql_param * self.alpha * cons_loss + self.phi * dist_loss
 
         # Do RL Learning
         self.mac.agent.encoder.requires_grad_(False)
@@ -352,14 +354,14 @@ class ODISLearner:
     def test_pretrain(self, batch: EpisodeBatch, t_env: int, episode_num: int, task: str):
         self.test_vae(batch, t_env, episode_num, task)
     
-    def train(self, batch: EpisodeBatch, t_env: int, episode_num: int, task: str):
+    def train(self, batch: EpisodeBatch, t_env: int, episode_num: int, task: str, cql_param=1.0):
         if self.training_steps == 0:
             self._reset_optimizer()
             for t in self.task2args:
                 task_args = self.task2args[t]
                 self.task2train_info[t]["log_stats_t"] = -task_args.learner_log_interval - 1
 
-        self.train_policy(batch, t_env, episode_num, task)
+        self.train_policy(batch, t_env, episode_num, task, cql_param)
         self.training_steps += 1
 
     def _update_targets(self):
