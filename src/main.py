@@ -136,7 +136,9 @@ if __name__ == '__main__':
             data_quality_dict = yaml.load(f)
         except yaml.YAMLError as exc:
             assert False, "{}.yaml error: {}"
-    config_dict = recursive_dict_update(config_dict, data_quality_dict)
+    
+    config_dict["offline_data_quality"] = data_quality_dict
+    # config_dict = recursive_dict_update(config_dict, data_quality_dict)
     ###########################################################################################
 
     config_dict = recursive_dict_update(config_dict, _get_argv_config(params))
