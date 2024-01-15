@@ -56,7 +56,7 @@ def _get_config(params, arg_name, subfolder):
             except yaml.YAMLError as exc:
                 assert False, "{}.yaml error: {}".format(config_name, exc)
 
-        return config_dict
+        return config_dict, config_name
     else:
         return {}
 
@@ -118,18 +118,19 @@ if __name__ == '__main__':
     config_dict['run_file'] = run_file
 
     # Load algorithm base configs
-    alg_config = _get_config(params, "--config", "algs")
+    alg_config, alg_config_name = _get_config(params, "--config", "algs")
     # config_dict = {**config_dict, **alg_config}
     config_dict = recursive_dict_update(config_dict, alg_config)
 
     # get env type and load env config
-    env_config = _get_config(params, "--env-config", "envs")
+    env_config, env_config_name = _get_config(params, "--env-config", "envs")
     config_dict = recursive_dict_update(config_dict, env_config)
     
-    task_config = _get_config(params, "--task-config", "tasks")
+    task_config, task_config_name = _get_config(params, "--task-config", "tasks")
     config_dict = recursive_dict_update(config_dict, task_config)
     
     ###########################################################################################
+    config_dict['run_name'] = task_config_name
     # 加载offline data的质量配置文件
     with open(os.path.join(os.path.dirname(__file__), "config", "tasks", "offline_data_quality.yaml"), "r") as f:
         try:
@@ -138,7 +139,6 @@ if __name__ == '__main__':
             assert False, "{}.yaml error: {}"
     
     config_dict["offline_data_quality"] = data_quality_dict["offline_data_quality"]
-    
     ###########################################################################################
 
     config_dict = recursive_dict_update(config_dict, _get_argv_config(params))

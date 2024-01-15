@@ -61,6 +61,3 @@ hybrid_begin_ratio: 0.8
 hybrid_end_ratio: 0.2
 
 performance_window_size: 50
-
-
-run_name: "bidirection_hybrid"

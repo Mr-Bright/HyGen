@@ -17,12 +17,32 @@ class Logger:
 
         self.stats = defaultdict(lambda: [])
 
-    def setup_wandb(self, directory_name, run_name):
+    def setup_wandb(self, directory_name, config):
         # Import here so it doesn't have to be installed if you don't use it
         t = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+        run_name = ''
+        if getattr(config, 'use_traj_encoder', False):
+            run_name = 'forward'
+        elif getattr(config, 'use_bidirection_traj_encoder', False):
+            run_name = 'bidirection'
+        else:
+            run_name = 'state'
+        
+        run_name += '_'
+        if getattr(config, 'train_hybrid', False):
+            run_name += 'hybrid-'
+            run_name += getattr(config, 'hybrid_mode')
+        else:
+            run_name += 'offline'
+        
+        run_name += '_'
+        run_name += config.run_name
+        config.run_name = run_name
+        
         wandb.init(project="hybrid_MARL",
                    dir=directory_name,
-                   name=run_name +" - "+ t)  
+                   name=run_name +" - "+ t,
+                   config=config)  
         self.use_wandb = True
 
     def setup_sacred(self, sacred_run_dict):
