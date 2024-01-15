@@ -12,7 +12,7 @@
             "console": "integratedTerminal",
             "justMyCode": true,
             "args": ["--mto",
-                "--config=odis",
+                "--config=hybrid",
                 "--env-config=sc2_offline",
                 "--task-config=toy",
                 "--seed=2"
