@@ -131,10 +131,14 @@ def init_tasks(task_list, main_args, logger):
         preprocess = {
             "actions": ("actions_onehot", [OneHot(out_dim=task_args.n_actions)])
         }
-
-        task2buffer[task] = ReplayBuffer(scheme, groups, main_args.online_buffer_size, env_info["episode_limit"] + 1,
-                                         preprocess=preprocess,
-                                         device="cpu" if task_args.buffer_cpu_only else task_args.device)
+        if task in list(main_args.train_tasks):
+            task2buffer[task] = ReplayBuffer(scheme, groups, main_args.online_buffer_size, env_info["episode_limit"] + 1,
+                                            preprocess=preprocess,
+                                            device="cpu" if task_args.buffer_cpu_only else task_args.device)
+        else:
+            task2buffer[task] = ReplayBuffer(scheme, groups, 1, env_info["episode_limit"] + 1,
+                                            preprocess=preprocess,
+                                            device="cpu" if task_args.buffer_cpu_only else task_args.device)
 
         # store task information
         task2scheme[task], task2groups[task], task2preprocess[task] = scheme, groups, preprocess

@@ -22,6 +22,26 @@
                 // "WANDB_API_KEY": "259b5343f66de66b2d60c5f2fbf156e924b72793",
                 "WANDB_API_KEY": "1de9d7f978f2d0084e0fa2694af45584a1eb31e8",
             }
+        },
+
+        {
+            "name": "marine-easy-expert",
+            "type": "python",
+            "request": "launch",
+            "program": "src/main.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": ["--mto",
+                "--config=hybrid",
+                "--env-config=sc2_offline",
+                "--task-config=marine-easy-expert",
+                "--seed=2"
+            ],
+            "env":{
+                "CUDA_VISIBLE_DEVICES": "1",
+                // "WANDB_API_KEY": "259b5343f66de66b2d60c5f2fbf156e924b72793",
+                "WANDB_API_KEY": "1de9d7f978f2d0084e0fa2694af45584a1eb31e8",
+            }
         }
     ]
 }
