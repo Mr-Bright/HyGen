@@ -60,4 +60,7 @@ hybrid_ratio: 0.5
 hybrid_begin_ratio: 0.8
 hybrid_end_ratio: 0.2
 
+cql_loss_mode: "fix" # fix, no, dynamic
+fix_cql_loss_param: 1.0
+
 performance_window_size: 50

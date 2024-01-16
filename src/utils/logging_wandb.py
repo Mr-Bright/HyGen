@@ -36,6 +36,15 @@ class Logger:
             run_name += 'offline'
         
         run_name += '_'
+        if config.cql_loss_mode == 'no':
+            run_name += 'no_cql'
+        elif config.cql_loss_mode == 'fix':
+            run_name += 'fix_cql'
+        elif config.cql_loss_mode =='dynamic':
+            run_name += 'dynamic_cql'
+        
+        run_name += '_'
+
         run_name += config.run_name
         config.run_name = run_name
         
