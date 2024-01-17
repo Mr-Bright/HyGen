@@ -213,7 +213,7 @@ def train_sequential(train_tasks, main_args, logger, learner, task2args, task2ru
                     raise ValueError("Do pretraining with a learner that does not have a `pretrain` method!")
             else:
                 # 这个是训练high-policy的部分
-                terminated = learner.train(episode_sample, t_env, episode, task)
+                terminated = learner.train(episode_sample, t_env, episode, task, 1)
 
             if terminated is not None and terminated:
                 break
@@ -529,7 +529,7 @@ def train_hybrid_55(train_tasks, main_args, logger, learner, task2args, task2run
                 if main_args.cql_loss_mode == 'no':
                     cql_param = 0
                 elif main_args.cql_loss_mode == 'fix':
-                    cql_param = main_args.fix_cql_loss_param
+                    cql_param = float(main_args.fix_cql_loss_param)
                 elif main_args.cql_loss_mode =='dynamic':
                     cql_param = hybrid_ratio
 

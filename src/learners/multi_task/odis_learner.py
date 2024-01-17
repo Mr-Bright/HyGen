@@ -354,7 +354,7 @@ class ODISLearner:
     def test_pretrain(self, batch: EpisodeBatch, t_env: int, episode_num: int, task: str):
         self.test_vae(batch, t_env, episode_num, task)
     
-    def train(self, batch: EpisodeBatch, t_env: int, episode_num: int, task: str, cql_param=1.0):
+    def train(self, batch: EpisodeBatch, t_env: int, episode_num: int, task: str, cql_param: float):
         if self.training_steps == 0:
             self._reset_optimizer()
             for t in self.task2args:
