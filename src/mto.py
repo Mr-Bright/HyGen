@@ -513,6 +513,9 @@ def train_hybrid_55(train_tasks, main_args, logger, learner, task2args, task2run
             
             episode_sample = get_episode_sample(task2buffer[task], task2offlinedata[task], batch_size_train, hybrid_ratio)
             
+            if t_env % 500 == 0:
+                logger.log_stat(task+"/hybrid_ratio", hybrid_ratio, t_env)
+            
 
             if episode_sample.device != task2args[task].device:
                 episode_sample.to(task2args[task].device)
