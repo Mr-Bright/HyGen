@@ -4,7 +4,7 @@ runner: "mt_episode"
 action_selector: "epsilon_greedy"
 epsilon_start: 1.0
 epsilon_finish: 0.05
-epsilon_anneal_time: 50000
+epsilon_anneal_time: 35000
 
 # update the target network every _ steps
 target_update_interval: 80
@@ -51,7 +51,7 @@ use_bidirection_traj_encoder: False
 
 ###########################################
 #hybird
-train_hybrid: True
+train_hybrid: False
 online_buffer_size: 10000
 online_interval: 2
 
