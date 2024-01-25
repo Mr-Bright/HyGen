@@ -491,7 +491,7 @@ def train_hybrid_55(train_tasks, main_args, logger, learner, task2args, task2run
                 task2buffer[task].insert_episode_batch(online_exp)
                 
             
-            
+            cur_performance = task2runner[task].get_window_won_rate(window_size=main_args.performance_window_size)
             # 获得这个task的episode的数据
             if main_args.hybrid_mode == 'fix':
                 hybrid_ratio = main_args.hybrid_ratio
@@ -501,7 +501,6 @@ def train_hybrid_55(train_tasks, main_args, logger, learner, task2args, task2run
                 
             elif main_args.hybrid_mode == 'dynamic':
                 #compute the cur_performance and offline_performance_bottleneck
-                cur_performance = task2runner[task].get_window_won_rate(window_size=main_args.performance_window_size)
                 data_quality = main_args.train_tasks_data_quality[task]
                 offline_data_quality_map = main_args.offline_data_quality
                 offline_performance_bottleneck = offline_data_quality_map[task][data_quality]
@@ -514,6 +513,7 @@ def train_hybrid_55(train_tasks, main_args, logger, learner, task2args, task2run
             episode_sample = get_episode_sample(task2buffer[task], task2offlinedata[task], batch_size_train, hybrid_ratio)
             
             if t_env % 500 == 0:
+                logger.log_stat(task+"/cur_performance", cur_performance, t_env)
                 logger.log_stat(task+"/hybrid_ratio", hybrid_ratio, t_env)
             
 
