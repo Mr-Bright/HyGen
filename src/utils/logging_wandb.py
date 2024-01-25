@@ -3,6 +3,7 @@ import logging
 import numpy as np
 import wandb
 import time
+import socket
 
 class Logger:
     def __init__(self, console_logger):
@@ -46,6 +47,7 @@ class Logger:
         run_name += '_'
 
         run_name += config.run_name
+        run_name += '_' + socket.gethostname()
         config.run_name = run_name
         
         wandb.init(project="hybrid_MARL",
