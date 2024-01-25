@@ -506,6 +506,7 @@ def train_hybrid_55(train_tasks, main_args, logger, learner, task2args, task2run
                 offline_performance_bottleneck = offline_data_quality_map[task][data_quality]
                 
                 hybrid_ratio = (main_args.hybrid_end_ratio - main_args.hybrid_begin_ratio) / (offline_performance_bottleneck ** 2) * (cur_performance **2) + main_args.hybrid_begin_ratio
+                hybrid_ratio = max(hybrid_ratio, main_args.hybrid_end_ratio)
                 
             else:
                 raise ValueError("hybrid_mode must be one of fix, linear, dynamic")   
