@@ -51,7 +51,7 @@ use_bidirection_traj_encoder: False
 
 ###########################################
 #hybird
-train_hybrid: False
+train_hybrid: True
 online_buffer_size: 10000
 online_interval: 2
 
