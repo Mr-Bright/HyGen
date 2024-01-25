@@ -114,7 +114,8 @@ class EpisodeRunner:
         
         #################################################################
         # 记录每个episode的win信息
-        self.win_record.append(cur_stats["battle_won"] / cur_stats["n_episodes"])
+        if not test_mode:
+            self.win_record.append(cur_stats["battle_won"] / cur_stats["n_episodes"])
 
         if not nolog:
             if test_mode and len(self.test_returns) == self.args.test_nepisode:
