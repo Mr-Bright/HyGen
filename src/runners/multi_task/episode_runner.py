@@ -1,6 +1,7 @@
 from functools import partial
 
 import numpy as np
+
 from components.episode_buffer import EpisodeBatch
 from envs import REGISTRY as env_REGISTRY
 
@@ -64,12 +65,13 @@ class EpisodeRunner:
         else:
             return sum(self.win_record[-window_size:]) / window_size
 
-    def run(self, test_mode=False, nolog=False, pretrain=False):
+    def run(self, test_mode=False, nolog=False, pretrain=False, epsilon_ratio=1.0):
         self.reset()
 
         terminated = False
         episode_return = 0
         self.mac.init_hidden(batch_size=self.batch_size, task=self.task)
+        self.mac.action_selector.epsilon_ratio = epsilon_ratio
 
         while not terminated:
             pre_transition_data = {

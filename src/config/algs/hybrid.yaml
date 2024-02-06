@@ -64,3 +64,4 @@ cql_loss_mode: "fix" # fix, no, dynamic
 fix_cql_loss_param: 1.0
 
 performance_window_size: 50
+dynamic_epsilon: False
