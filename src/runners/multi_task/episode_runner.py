@@ -1,11 +1,11 @@
-from envs import REGISTRY as env_REGISTRY
 from functools import partial
-from components.episode_buffer import EpisodeBatch
+
 import numpy as np
+from components.episode_buffer import EpisodeBatch
+from envs import REGISTRY as env_REGISTRY
 
 
 class EpisodeRunner:
-
     def __init__(self, args, logger, task):
         self.args = args
         self.logger = logger
@@ -23,7 +23,7 @@ class EpisodeRunner:
         self.test_returns = []
         self.train_stats = {}
         self.test_stats = {}
-        
+
         #################################################################
         # 用于记录每个episode的return的信息
         self.win_record = []
@@ -32,8 +32,15 @@ class EpisodeRunner:
         self.log_train_stats_t = -1000000
 
     def setup(self, scheme, groups, preprocess, mac):
-        self.new_batch = partial(EpisodeBatch, scheme, groups, self.batch_size, self.episode_limit + 1,
-                                 preprocess=preprocess, device=self.args.device)
+        self.new_batch = partial(
+            EpisodeBatch,
+            scheme,
+            groups,
+            self.batch_size,
+            self.episode_limit + 1,
+            preprocess=preprocess,
+            device=self.args.device,
+        )
         self.mac = mac
 
     def get_env_info(self):
@@ -49,7 +56,7 @@ class EpisodeRunner:
         self.batch = self.new_batch()
         self.env.reset()
         self.t = 0
-    
+
     # 得到最近window_size个episode的平均胜率
     def get_window_won_rate(self, window_size=10):
         if len(self.win_record) < window_size:
@@ -65,18 +72,23 @@ class EpisodeRunner:
         self.mac.init_hidden(batch_size=self.batch_size, task=self.task)
 
         while not terminated:
-
             pre_transition_data = {
                 "state": [self.env.get_state()],
                 "avail_actions": [self.env.get_avail_actions()],
-                "obs": [self.env.get_obs()]
+                "obs": [self.env.get_obs()],
             }
 
             self.batch.update(pre_transition_data, ts=self.t)
 
             # Pass the entire batch of experiences up till now to the agents
             # Receive the actions for each agent at this timestep in a batch of size 1
-            actions = self.mac.select_actions(self.batch, t_ep=self.t, t_env=self.t_env, task=self.task, test_mode=test_mode)
+            actions = self.mac.select_actions(
+                self.batch,
+                t_ep=self.t,
+                t_env=self.t_env,
+                task=self.task,
+                test_mode=test_mode,
+            )
 
             reward, terminated, env_info = self.env.step(actions[0])
             episode_return += reward
@@ -94,37 +106,56 @@ class EpisodeRunner:
         last_data = {
             "state": [self.env.get_state()],
             "avail_actions": [self.env.get_avail_actions()],
-            "obs": [self.env.get_obs()]
+            "obs": [self.env.get_obs()],
         }
         self.batch.update(last_data, ts=self.t)
 
         # Select actions in the last stored state
-        actions = self.mac.select_actions(self.batch, t_ep=self.t, t_env=self.t_env, task=self.task, test_mode=test_mode)
+        actions = self.mac.select_actions(
+            self.batch,
+            t_ep=self.t,
+            t_env=self.t_env,
+            task=self.task,
+            test_mode=test_mode,
+        )
 
-        self.batch.update({"actions": actions}, ts=self.t)      
-     
+        self.batch.update({"actions": actions}, ts=self.t)
+
         cur_stats = self.test_stats if test_mode else self.train_stats
         cur_returns = self.test_returns if test_mode else self.train_returns
         log_prefix = f"{'pretrain/' if pretrain else ''}{self.task}/{'test_' if test_mode else ''}"
-        cur_stats.update({k: cur_stats.get(k, 0) + env_info.get(k, 0) for k in set(cur_stats) | set(env_info)})
+        cur_stats.update(
+            {
+                k: cur_stats.get(k, 0) + env_info.get(k, 0)
+                for k in set(cur_stats) | set(env_info)
+            }
+        )
         cur_stats["n_episodes"] = 1 + cur_stats.get("n_episodes", 0)
         cur_stats["ep_length"] = self.t + cur_stats.get("ep_length", 0)
 
         cur_returns.append(episode_return)
-        
+
         #################################################################
         # 记录每个episode的win信息
-        if not test_mode:
-            self.win_record.append(cur_stats["battle_won"] / cur_stats["n_episodes"])
+        if test_mode and "battle_won" in env_info.keys():
+            self.win_record.append(int(env_info["battle_won"]))
+            # self.win_record.append(cur_stats["battle_won"] / cur_stats["n_episodes"])
 
         if not nolog:
             if test_mode and len(self.test_returns) == self.args.test_nepisode:
-                self._log(cur_returns, cur_stats, log_prefix)            
-            elif not test_mode and self.t_env - self.log_train_stats_t >= self.args.runner_log_interval:
                 self._log(cur_returns, cur_stats, log_prefix)
-                if 'offline' not in self.args.run_file:
+            elif (
+                not test_mode
+                and self.t_env - self.log_train_stats_t >= self.args.runner_log_interval
+            ):
+                self._log(cur_returns, cur_stats, log_prefix)
+                if "offline" not in self.args.run_file:
                     if hasattr(self.mac.action_selector, "epsilon"):
-                        self.logger.log_stat(f"{self.task}/epsilon", self.mac.action_selector.epsilon, self.t_env)
+                        self.logger.log_stat(
+                            f"{self.task}/epsilon",
+                            self.mac.action_selector.epsilon,
+                            self.t_env,
+                        )
                 self.log_train_stats_t = self.t_env
 
         return self.batch
@@ -136,12 +167,15 @@ class EpisodeRunner:
 
         for k, v in stats.items():
             if k != "n_episodes":
-                self.logger.log_stat(prefix + k + "_mean" , v/stats["n_episodes"], self.t_env)
+                self.logger.log_stat(
+                    prefix + k + "_mean", v / stats["n_episodes"], self.t_env
+                )
         stats.clear()
 
     def evaluate(self):
         self.reset()
         import os
+
         os.environ["SDL_VIDEODRIVER"] = "dummy"
         render_images = [self.env.render()]
 
@@ -150,18 +184,23 @@ class EpisodeRunner:
         self.mac.init_hidden(batch_size=self.batch_size, task=self.task)
 
         while not terminated:
-
             pre_transition_data = {
                 "state": [self.env.get_state()],
                 "avail_actions": [self.env.get_avail_actions()],
-                "obs": [self.env.get_obs()]
+                "obs": [self.env.get_obs()],
             }
 
             self.batch.update(pre_transition_data, ts=self.t)
 
             # Pass the entire batch of experiences up till now to the agents
             # Receive the actions for each agent at this timestep in a batch of size 1
-            actions = self.mac.select_actions(self.batch, t_ep=self.t, t_env=self.t_env, task=self.task, test_mode=True)
+            actions = self.mac.select_actions(
+                self.batch,
+                t_ep=self.t,
+                t_env=self.t_env,
+                task=self.task,
+                test_mode=True,
+            )
 
             reward, terminated, env_info = self.env.step(actions[0])
             episode_return += reward
@@ -181,25 +220,32 @@ class EpisodeRunner:
         last_data = {
             "state": [self.env.get_state()],
             "avail_actions": [self.env.get_avail_actions()],
-            "obs": [self.env.get_obs()]
+            "obs": [self.env.get_obs()],
         }
         self.batch.update(last_data, ts=self.t)
 
         # Select actions in the last stored state
-        actions = self.mac.select_actions(self.batch, t_ep=self.t, t_env=self.t_env, task=self.task, test_mode=True)
+        actions = self.mac.select_actions(
+            self.batch, t_ep=self.t, t_env=self.t_env, task=self.task, test_mode=True
+        )
 
-        self.batch.update({"actions": actions}, ts=self.t)      
-     
+        self.batch.update({"actions": actions}, ts=self.t)
+
         cur_stats = self.test_stats
         cur_returns = self.test_returns
         log_prefix = f"{self.task}/eval_"
-        cur_stats.update({k: cur_stats.get(k, 0) + env_info.get(k, 0) for k in set(cur_stats) | set(env_info)})
+        cur_stats.update(
+            {
+                k: cur_stats.get(k, 0) + env_info.get(k, 0)
+                for k in set(cur_stats) | set(env_info)
+            }
+        )
         cur_stats["n_episodes"] = 1 + cur_stats.get("n_episodes", 0)
         cur_stats["ep_length"] = self.t + cur_stats.get("ep_length", 0)
 
         cur_returns.append(episode_return)
 
         if len(self.test_returns) == self.args.test_nepisode:
-            self._log(cur_returns, cur_stats, log_prefix)            
+            self._log(cur_returns, cur_stats, log_prefix)
 
         return render_images
