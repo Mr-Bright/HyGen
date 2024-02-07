@@ -65,3 +65,5 @@ fix_cql_loss_param: 1.0
 
 performance_window_size: 50
 dynamic_epsilon: True
+
+run_name: ""
