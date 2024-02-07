@@ -607,18 +607,18 @@ def train_hybrid_55(
 
     test_time_total += time.time() - test_start_time
 
+    hybrid_ratio_map = {}
     # 开始训练
     while t_env < t_max:
         # shuffle tasks
         np.random.shuffle(train_tasks)
         # train each task
         for task in train_tasks:
-            hybrid_ratio = 0
             # online 运行获得经验
             for i in range(main_args.online_interval):
                 epsilon_ratio = 1
-                if main_args.dynamic_epsilon and hybrid_ratio != 0:
-                    epsilon_ratio = 0.5 / hybrid_ratio
+                if main_args.dynamic_epsilon and task in hybrid_ratio_map:
+                    epsilon_ratio = 0.5 / hybrid_ratio_map[task]
                 online_exp = task2runner[task].run(
                     test_mode=False, epsilon_ratio=epsilon_ratio
                 )
@@ -660,8 +660,9 @@ def train_hybrid_55(
                 batch_size_train,
                 hybrid_ratio,
             )
+            hybrid_ratio_map[task] = hybrid_ratio
 
-            if t_env % 500 == 0:
+            if t_env % 50 == 0:
                 logger.log_stat(task + "/cur_performance", cur_performance, t_env)
                 logger.log_stat(task + "/hybrid_ratio", hybrid_ratio, t_env)
 

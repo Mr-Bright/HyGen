@@ -141,6 +141,7 @@ class EpisodeRunner:
         # 记录每个episode的win信息
         if test_mode and "battle_won" in env_info.keys():
             self.win_record.append(int(env_info["battle_won"]))
+
             # self.win_record.append(cur_stats["battle_won"] / cur_stats["n_episodes"])
 
         if not nolog:
