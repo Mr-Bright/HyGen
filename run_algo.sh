@@ -9,8 +9,8 @@ for t in "${tasks[@]}"
 do
    for i in {0..2}
    do
-      python src/main.py --mto --config=hybrid --env-config=sc2_offline --task-config=$t --seed=$i &
       echo "===========================Running task $t for seed=$i==========================="
+      ok=`python src/main.py --mto --config=hybrid --env-config=sc2_offline --task-config=$t --seed=$i`
       sleep 10s
    done
 done
