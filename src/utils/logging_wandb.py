@@ -47,7 +47,6 @@ class Logger:
             run_name += "dynamic_cql"
 
         run_name += "_"
-
         run_name += config.run_name
         run_name += "_" + socket.gethostname()
         config.run_name = run_name
