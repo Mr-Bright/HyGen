@@ -177,6 +177,13 @@ class StateEncoder(nn.Module):
         self.query = nn.Linear(self.entity_embed_dim, self.attn_embed_dim)
         self.key = nn.Linear(self.entity_embed_dim, self.attn_embed_dim)
         
+        
+        
+        self.use_layer_norm = args.use_layer_norm
+        
+        if self.use_layer_norm:
+            self.ln = nn.LayerNorm(self.entity_embed_dim)
+        
         self.use_traj_encoder = args.use_traj_encoder
         
         # 用于计算轨迹的LSTM
@@ -235,8 +242,13 @@ class StateEncoder(nn.Module):
         attn_score = F.softmax(energy, dim=1)
         proj_value = entity_embed.permute(1, 2, 3, 0).reshape(bs, self.entity_embed_dim, n_entities)
         attn_out = th.bmm(proj_value, attn_score).squeeze(1).permute(0, 2, 1)[:, :n_agents, :]  #.reshape(bs, n_entities, self.entity_embed_dim)[:, :n_agents, :]
+        
+        
+        if self.use_layer_norm:
+            attn_out = self.ln(attn_out)
 
         attn_out = attn_out.reshape(bs * n_agents, self.entity_embed_dim)
+        
         
         ######################################################################### 
         # 用计算后的attention embedding计算hidden_state
@@ -277,6 +289,10 @@ class ObsEncoder(nn.Module):
         self.own_value = nn.Linear(wrapped_obs_own_dim, self.entity_embed_dim)
 
         self.transformer = Transformer(self.entity_embed_dim, args.head, args.depth, self.entity_embed_dim)
+        
+        self.use_layer_norm = args.use_layer_norm
+        if self.use_layer_norm:
+            self.ln = nn.LayerNorm(self.entity_embed_dim)
 
         # self.q_skill = nn.Linear(self.entity_embed_dim, self.skill_dim)
 
@@ -326,6 +342,9 @@ class ObsEncoder(nn.Module):
         total_hidden = th.cat([own_hidden, enemy_hidden, ally_hidden, history_hidden], dim=1)
 
         outputs = self.transformer(total_hidden, None)
+        
+        if self.use_layer_norm:
+            outputs = self.ln(outputs)
 
         h = outputs[:, -1:, :]
         skill_inputs = outputs[:, 0, :]

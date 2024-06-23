@@ -58,6 +58,8 @@ class ODISLearner:
         
         #双向GRU
         self.use_bidirection_traj_encoder = main_args.use_bidirection_traj_encoder
+        
+        self.train_decoder = main_args.train_decoder
 
         self.pretrain_steps = 0
         self.training_steps = 0
@@ -307,12 +309,14 @@ class ODISLearner:
         # Do RL Learning
         self.mac.agent.encoder.requires_grad_(False)
         self.mac.agent.state_encoder.requires_grad_(False)
-        self.mac.agent.decoder.requires_grad_(False)
         ###########################
         if self.use_bidirection_traj_encoder:
             self.mac.agent.forward_GRU.requires_grad_(False)
             self.mac.agent.backward_GRU.requires_grad_(False)
             self.mac.agent.forward_linear.requires_grad_(False)
+            
+        self.mac.agent.decoder.requires_grad_(self.train_decoder)
+            
         
         
         # self.optimiser.zero_grad()
