@@ -45,6 +45,8 @@ class Logger:
             run_name += "fix_cql"
         elif config.cql_loss_mode == "dynamic":
             run_name += "dynamic_cql"
+            
+        group_name = config.group_name.split("_")[0]
 
         run_name += "_"
         run_name += config.run_name
@@ -52,7 +54,7 @@ class Logger:
         config.run_name = run_name
 
         wandb.init(
-            project="hybrid_MARL", dir=directory_name, name=run_name, config=config
+            project="hybrid_MARL", group=group_name, dir=directory_name, name=run_name, config=config
         )
         self.use_wandb = True
 
