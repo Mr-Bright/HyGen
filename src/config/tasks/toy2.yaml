@@ -3,7 +3,7 @@
 # get env information
 env: "sc2"
 # get task information
-task: "marine-easy-medium"
+task: "toy2"
 # define train tasks and test tasks
 train_tasks: ["3m", "5m", "10m"]
 train_tasks_data_quality: {
