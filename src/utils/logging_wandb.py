@@ -46,7 +46,17 @@ class Logger:
         elif config.cql_loss_mode == "dynamic":
             run_name += "dynamic_cql"
             
-        group_name = config.group_name.split("_")[0]
+        
+        if getattr(config, "train_decoder", True):
+            run_name += "_"
+            run_name += "decoder"
+        
+        if getattr(config, "use_layer_norm", True):
+            run_name += "_"
+            run_name += "layernorm_encoder"
+            
+            
+        group_name = config.run_name.split("_")[0]
 
         run_name += "_"
         run_name += config.run_name
