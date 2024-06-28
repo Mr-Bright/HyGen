@@ -632,9 +632,9 @@ def train_hybrid_55(
                 hybrid_ratio = main_args.hybrid_ratio
 
             elif main_args.hybrid_mode == "linear":
-                hybrid_ratio = main_args.hybrid_begin_ratio - (t_env / t_max) * (
+                hybrid_ratio = max(main_args.hybrid_begin_ratio - (t_env / main_args.linear_length) * (
                     main_args.hybrid_begin_ratio - main_args.hybrid_end_ratio
-                )
+                ), main_args.hybrid_end_ratio)
 
             elif main_args.hybrid_mode == "dynamic":
                 # compute the cur_performance and offline_performance_bottleneck

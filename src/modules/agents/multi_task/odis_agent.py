@@ -231,6 +231,9 @@ class StateEncoder(nn.Module):
 
         # we ought to do self-attention
         entity_embed = th.cat([ally_embed, enemy_embed], dim=0)
+        
+        if self.use_layer_norm:
+            entity_embed = self.ln(entity_embed)
 
         # 把下面这一块也替换成transformer结构的，输入hidden_state
         
@@ -244,8 +247,7 @@ class StateEncoder(nn.Module):
         attn_out = th.bmm(proj_value, attn_score).squeeze(1).permute(0, 2, 1)[:, :n_agents, :]  #.reshape(bs, n_entities, self.entity_embed_dim)[:, :n_agents, :]
         
         
-        if self.use_layer_norm:
-            attn_out = self.ln(attn_out)
+        
 
         attn_out = attn_out.reshape(bs * n_agents, self.entity_embed_dim)
         
@@ -340,11 +342,13 @@ class ObsEncoder(nn.Module):
         history_hidden = hidden_state
 
         total_hidden = th.cat([own_hidden, enemy_hidden, ally_hidden, history_hidden], dim=1)
+        
+        if self.use_layer_norm:
+            total_hidden = self.ln(total_hidden)
 
         outputs = self.transformer(total_hidden, None)
         
-        if self.use_layer_norm:
-            outputs = self.ln(outputs)
+        
 
         h = outputs[:, -1:, :]
         skill_inputs = outputs[:, 0, :]

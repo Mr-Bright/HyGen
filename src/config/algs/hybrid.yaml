@@ -60,15 +60,17 @@ train_hybrid: False
 online_buffer_size: 2000
 online_interval: 2
 
-hybrid_mode: "dynamic" # fix, linear, dynamic
+hybrid_mode: "linear" # fix, linear, dynamic
 hybrid_ratio: 0.5
-hybrid_begin_ratio: 0.8
-hybrid_end_ratio: 0.2
+hybrid_begin_ratio: 1.0
+hybrid_end_ratio: 0.1
+
+linear_length: 5000
 
 cql_loss_mode: "dynamic" # fix, no, dynamic
 fix_cql_loss_param: 1.0
 
 performance_window_size: 50
-dynamic_epsilon: True
+dynamic_epsilon: False
 
 run_name: ""
