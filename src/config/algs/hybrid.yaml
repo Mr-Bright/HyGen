@@ -7,7 +7,7 @@ epsilon_finish: 0.05
 epsilon_anneal_time: 20000
 
 # update the target network every _ steps
-target_update_interval: 80
+target_update_interval: 50
 
 # use the Q_Learner to train
 agent_output_type: "q"
@@ -29,7 +29,7 @@ mac: "mt_odis_mac"
 # params about trans mixing network
 entity_embed_dim: 64
 attn_embed_dim: 8
-skill_dim: 3
+skill_dim: 5
 c_step: 1
 beta: 0.001
 coef_conservative: 5.0
@@ -37,7 +37,7 @@ coef_dist: 5.0
 pretrain_steps: 15000
 pretrain: True
 
-head: 1
+head: 8
 depth: 1
 
 # params about observation decomposition
@@ -52,11 +52,15 @@ use_bidirection_traj_encoder: False
 ############################################
 # new params
 use_layer_norm: False
-train_decoder: False
+train_decoder: True
+
+#############################################
+use_self_attention: True
+attention_head: 8
 
 ###########################################
 #hybird
-train_hybrid: False
+train_hybrid: True
 online_buffer_size: 2000
 online_interval: 2
 
@@ -73,4 +77,4 @@ fix_cql_loss_param: 1.0
 performance_window_size: 50
 dynamic_epsilon: False
 
-run_name: ""
+run_name: "multi-head-8"

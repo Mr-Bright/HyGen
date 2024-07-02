@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from utils.embed import polynomial_embed, binary_embed
-from utils.transformer import Transformer
+from utils.transformer import Transformer, SelfAttention
 
 
 class ODISAgent(nn.Module):
@@ -177,6 +177,11 @@ class StateEncoder(nn.Module):
         self.query = nn.Linear(self.entity_embed_dim, self.attn_embed_dim)
         self.key = nn.Linear(self.entity_embed_dim, self.attn_embed_dim)
         
+        if args.use_self_attention:
+            self.use_self_attention = True
+            self.attention_head = args.attention_head
+            self.attention = SelfAttention(self.entity_embed_dim, self.attention_head)
+        
         
         
         self.use_layer_norm = args.use_layer_norm
@@ -232,23 +237,29 @@ class StateEncoder(nn.Module):
         # we ought to do self-attention
         entity_embed = th.cat([ally_embed, enemy_embed], dim=0)
         
+        # entity_embed = entity_embed.permute(1,2,0,3).reshape(bs, n_entities,-1)
+        
         if self.use_layer_norm:
             entity_embed = self.ln(entity_embed)
 
         # 把下面这一块也替换成transformer结构的，输入hidden_state
         
-
-        # do attention
-        proj_query = self.query(entity_embed).permute(1, 2, 0, 3).reshape(bs, n_entities, self.attn_embed_dim)
-        proj_key = self.key(entity_embed).permute(1, 2, 3, 0).reshape(bs, self.attn_embed_dim, n_entities)
-        energy = th.bmm(proj_query / (self.attn_embed_dim ** (1 / 2)), proj_key)
-        attn_score = F.softmax(energy, dim=1)
-        proj_value = entity_embed.permute(1, 2, 3, 0).reshape(bs, self.entity_embed_dim, n_entities)
-        attn_out = th.bmm(proj_value, attn_score).squeeze(1).permute(0, 2, 1)[:, :n_agents, :]  #.reshape(bs, n_entities, self.entity_embed_dim)[:, :n_agents, :]
+        
+        
+        if not self.use_self_attention:
+            # do attention
+            proj_query = self.query(entity_embed).permute(1, 2, 0, 3).reshape(bs, n_entities, self.attn_embed_dim)
+            proj_key = self.key(entity_embed).permute(1, 2, 3, 0).reshape(bs, self.attn_embed_dim, n_entities)
+            energy = th.bmm(proj_query / (self.attn_embed_dim ** (1 / 2)), proj_key)
+            attn_score = F.softmax(energy, dim=1)
+            proj_value = entity_embed.permute(1, 2, 3, 0).reshape(bs, self.entity_embed_dim, n_entities)
+            attn_out = th.bmm(proj_value, attn_score).squeeze(1).permute(0, 2, 1)[:, :n_agents, :]  #.reshape(bs, n_entities, self.entity_embed_dim)[:, :n_agents, :]
+        else:
+            entity_embed = entity_embed.permute(1,2,0,3).reshape(bs, n_entities,-1)
+            attn_out = self.attention(entity_embed, None)[:, :n_agents, :]
         
         
         
-
         attn_out = attn_out.reshape(bs * n_agents, self.entity_embed_dim)
         
         
