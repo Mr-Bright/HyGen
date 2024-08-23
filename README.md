@@ -56,8 +56,13 @@ As the dataset is large, we only contain the toy task config of `3m` medium data
 python src/main.py --mto --config=odis --env-config=sc2_offline --task-config=marine-hard-expert --seed=1
 ```
 
-All results will be stored in the `results` folder. You can see the console output, config, and tensorboard logging in the cooresponding directory.
+All results will be stored in the `results` folder and visualization results will be presented in wandb.
 
+```bash
+wandb login
+```
+
+Provide your wandb API key when prompted. (Get one from https://wandb.com)
 ## References
 
 - [ODIS](https://github.com/LAMDA-RL/ODIS)
