@@ -1,1 +1,0 @@
-CUDA_VISIBLE_DEVICES=0 WANDB_API_KEY=1de9d7f978f2d0084e0fa2694af45584a1eb31e8 python src/main.py --mto --config=hybrid --env-config=sc2_offline --task-config=toy --seed=1
