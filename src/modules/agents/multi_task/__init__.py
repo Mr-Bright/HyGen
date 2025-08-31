@@ -1,5 +1,5 @@
-from .odis_agent import ODISAgent
+from .hygen_agent import HyGenAgent
 
 REGISTRY = {}
 
-REGISTRY["mt_odis"] = ODISAgent
+REGISTRY["mt_hygen"] = HyGenAgent

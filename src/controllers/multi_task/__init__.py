@@ -1,6 +1,6 @@
-from .mt_odis_controller import ODISMAC
+from .mt_hygen_controller import HyGenMAC
 
 
 REGISTRY = {}
 
-REGISTRY["mt_odis_mac"] = ODISMAC
+REGISTRY["mt_hygen_mac"] = HyGenMAC

@@ -11,7 +11,7 @@ target_update_interval: 50
 
 # use the Q_Learner to train
 agent_output_type: "q"
-learner: "odis_learner"
+learner: "hygen_learner"
 double_q: True
 mixer: "mt_qattn"
 mixing_embed_dim: 32
@@ -21,10 +21,10 @@ hypernet_embed: 64
 name: "mto"
 
 # agent type
-agent: "mt_odis"
+agent: "mt_hygen"
 
 # mac
-mac: "mt_odis_mac"
+mac: "mt_hygen_mac"
 
 # params about trans mixing network
 entity_embed_dim: 64
