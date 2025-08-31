@@ -43,13 +43,13 @@ bash install_smac_patch.sh
 You can execute the following command to run HyGen with a toy task config, which will perform training on a small batch of data:
 
 ```bash
-python src/main.py --mto --config=hybrid --env-config=sc2_offline --task-config=toy --seed=1
+python src/main.py --mto --config=hygen --env-config=sc2_offline --task-config=toy --seed=1
 ```
 
 The `--task-config` flag can be followed with any existing config name in the `src/config/tasks/` directory, and any other config named `xx` can be passed by `--xx=value`. 
 
 ```bash
-python src/main.py --mto --config=hybrid --env-config=sc2_offline --task-config=marine-hard-expert --seed=1
+python src/main.py --mto --config=hygen --env-config=sc2_offline --task-config=marine-hard-expert --seed=1
 ```
 
 All results will be stored in the `results` folder and visualization results will be presented in wandb.
