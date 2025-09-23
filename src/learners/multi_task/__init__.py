@@ -1,5 +1,5 @@
-from .odis_learner import ODISLearner
+from .hygen_learner import HyGenLearner
 
 REGISTRY = {}
 
-REGISTRY["odis_learner"] = ODISLearner
+REGISTRY["hygen_learner"] = HyGenLearner

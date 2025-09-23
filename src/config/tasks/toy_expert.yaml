@@ -3,11 +3,11 @@
 # get env information
 env: "sc2"
 # get task information
-task: "toy"
+task: "toy-expert"
 # define train tasks and test tasks
 train_tasks: ["3m"]
 train_tasks_data_quality: {
-    "3m": "medium",
+    "3m": "expert",
 }
 
 test_tasks: ["3m", "4m", "5m"]
@@ -17,5 +17,5 @@ test_tasks_data_quality: {
 # define additional pretrain tasks
 pretrain_tasks: ["3m"]
 pretrain_tasks_data_quality: {
-    "3m": "medium",
+    "3m": "expert",
 }

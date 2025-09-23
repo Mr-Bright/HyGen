@@ -5,7 +5,7 @@ import time
 import threading
 import torch as th
 from types import SimpleNamespace as SN
-from utils.logging import Logger
+from utils.logging_wandb import Logger
 from utils.timehelper import time_left, time_str
 from os.path import dirname, abspath
 import json
@@ -39,8 +39,18 @@ def run(_run, _config, _log):
     if args.use_tensorboard and not args.evaluate:
         # only log tensorboard when in training mode
         tb_exp_direc = os.path.join(results_save_dir, 'tb_logs')
-        logger.setup_tb(tb_exp_direc)
+        logger.setup_wandb(tb_exp_direc)
         
+        # write config file
+        config_str = json.dumps(vars(args), indent=4)
+        with open(os.path.join(results_save_dir, "config.json"), "w") as f:
+            f.write(config_str)
+            
+    elif args.use_wandb and not args.evaluate:
+        # only log tensorboard when in training mode
+        wandb_exp_direc = os.path.join(results_save_dir, 'wandb_logs')
+        logger.setup_wandb(wandb_exp_direc)
+
         # write config file
         config_str = json.dumps(vars(args), indent=4)
         with open(os.path.join(results_save_dir, "config.json"), "w") as f:

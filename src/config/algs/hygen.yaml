@@ -1,0 +1,80 @@
+runner: "mt_episode"
+
+# only use for initializing action selector
+action_selector: "epsilon_greedy"
+epsilon_start: 1
+epsilon_finish: 0.05
+epsilon_anneal_time: 20000
+
+# update the target network every _ steps
+target_update_interval: 50
+
+# use the Q_Learner to train
+agent_output_type: "q"
+learner: "hygen_learner"
+double_q: True
+mixer: "mt_qattn"
+mixing_embed_dim: 32
+hypernet_layers: 2
+hypernet_embed: 64
+
+name: "mto"
+
+# agent type
+agent: "mt_hygen"
+
+# mac
+mac: "mt_hygen_mac"
+
+# params about trans mixing network
+entity_embed_dim: 64
+attn_embed_dim: 8
+skill_dim: 5
+c_step: 1
+beta: 0.001
+coef_conservative: 5.0
+coef_dist: 5.0
+pretrain_steps: 15000
+pretrain: True
+
+head: 8
+depth: 1
+
+# params about observation decomposition
+id_length: 4
+max_agent: 15
+
+#########################################
+# encoder params
+use_traj_encoder: False
+use_bidirection_traj_encoder: False
+
+############################################
+# new params
+use_layer_norm: False
+train_decoder: True
+
+#############################################
+use_self_attention: True
+attention_head: 8
+
+###########################################
+#hybird
+train_hybrid: True
+online_buffer_size: 2000
+online_interval: 2
+
+hybrid_mode: "linear" # fix, linear, dynamic
+hybrid_ratio: 0.5
+hybrid_begin_ratio: 1.0
+hybrid_end_ratio: 0.1
+
+linear_length: 5000
+
+cql_loss_mode: "dynamic" # fix, no, dynamic
+fix_cql_loss_param: 1.0
+
+performance_window_size: 50
+dynamic_epsilon: False
+
+run_name: "multi-head-8"
