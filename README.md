@@ -66,7 +66,7 @@ wandb login
 
 
 Provide your wandb API key when prompted. (Get one from https://wandb.com)
-## References
+## Results
 
 
 All results will be stored in the `results` folder and visualization results will be presented in wandb.
