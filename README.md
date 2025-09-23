@@ -1,5 +1,8 @@
 # HyGen: Hybrid Training for Enhanced Multi-task Generalization in MARL
 
+
+[Paper Link](https://openreview.net/forum?id=53FyUAdP7d&referrer=%5BAuthor%20Console%5D(%2Fgroup%3Fid%3DICLR.cc%2F2023%2FConference%2FAuthors%23your-submissions))
+
 This is the implementation of the paper "Hybrid Training for Enhanced Multi-task Generalization in Multi-agent Reinforcement Learning". 
 
 ## Installation instructions
@@ -48,9 +51,23 @@ python src/main.py --mto --config=hygen --env-config=sc2_offline --task-config=t
 
 The `--task-config` flag can be followed with any existing config name in the `src/config/tasks/` directory, and any other config named `xx` can be passed by `--xx=value`. 
 
+
 ```bash
 python src/main.py --mto --config=hygen --env-config=sc2_offline --task-config=marine-hard-expert --seed=1
 ```
+
+All results will be stored in the `results` folder and visualization results will be presented in wandb.
+As the dataset is large, we only contain the toy task config of `3m` medium data in the `dataset` folder from the default code base. Therefore, we provide the data link to the full dataset by this [Google Drive URL](https://drive.google.com/file/d/1yyqMBwZkEV6SIXB7F41Lc9tQeCoq_Nza/view?usp=sharing) and you can substitute the original data with the full dataset. After putting the full dataset in the `dataset` folder, you can run experiments in our pre-defined task sets like 
+
+
+```bash
+wandb login
+```
+
+
+Provide your wandb API key when prompted. (Get one from https://wandb.com)
+## References
+
 
 All results will be stored in the `results` folder and visualization results will be presented in wandb.
 
