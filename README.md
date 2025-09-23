@@ -1,7 +1,7 @@
-# HyGen: Hybrid Training for Enhanced Multi-task Generalization in MARL
+# [NeurIPS 2025 ARLET Workshop] HyGen: Hybrid Training for Enhanced Multi-task Generalization in MARL
 
 
-[Paper Link](https://openreview.net/forum?id=53FyUAdP7d&referrer=%5BAuthor%20Console%5D(%2Fgroup%3Fid%3DICLR.cc%2F2023%2FConference%2FAuthors%23your-submissions))
+[Paper Link](https://arxiv.org/pdf/2408.13567)
 
 This is the implementation of the paper "Hybrid Training for Enhanced Multi-task Generalization in Multi-agent Reinforcement Learning". 
 
