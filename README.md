@@ -76,6 +76,21 @@ wandb login
 ```
 
 Provide your wandb API key when prompted. (Get one from https://wandb.com)
+
+## Citation
+
+```bibtex
+@misc{zhang2024hybridtrainingenhancedmultitask,
+      title={Hybrid Training for Enhanced Multi-task Generalization in Multi-agent Reinforcement Learning}, 
+      author={Mingliang Zhang and Sichang Su and Chengyang He and Guillaume Sartoretti},
+      year={2024},
+      eprint={2408.13567},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG},
+      url={https://arxiv.org/abs/2408.13567}, 
+}
+```
+
 ## References
 
 - [ODIS](https://github.com/LAMDA-RL/ODIS)
