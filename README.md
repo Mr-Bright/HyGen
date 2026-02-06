@@ -80,14 +80,13 @@ Provide your wandb API key when prompted. (Get one from https://wandb.com)
 ## Citation
 
 ```bibtex
-@misc{zhang2024hybridtrainingenhancedmultitask,
-      title={Hybrid Training for Enhanced Multi-task Generalization in Multi-agent Reinforcement Learning}, 
-      author={Mingliang Zhang and Sichang Su and Chengyang He and Guillaume Sartoretti},
-      year={2024},
-      eprint={2408.13567},
-      archivePrefix={arXiv},
-      primaryClass={cs.LG},
-      url={https://arxiv.org/abs/2408.13567}, 
+@inproceedings{
+zhang2025hybrid,
+title={Hybrid Training for Enhanced Multi-task Generalization in Multi-agent Reinforcement Learning},
+author={Mingliang Zhang and Sichang Su and Chengyang He and Guillaume Adrien Sartoretti},
+booktitle={NeurIPS 2025 Workshop: Second Workshop on Aligning Reinforcement Learning Experimentalists and Theorists},
+year={2025},
+url={https://openreview.net/forum?id=hCk4aQJNF9}
 }
 ```
 
